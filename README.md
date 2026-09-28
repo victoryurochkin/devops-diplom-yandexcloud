@@ -15,16 +15,24 @@
 - [ ] Проверено удаление и повторное создание основной инфраструктуры.
 - [x] Созданы виртуальные машины и группы безопасности.
 - [x] Установлен Kubernetes.
-- [ ] Развёрнуты приложение и мониторинг.
-- [ ] Настроены CI/CD инфраструктуры и приложения.
+- [x] Установлен Traefik, проверен входящий HTTP-трафик.
+- [x] Развёрнут мониторинг, Grafana доступна по HTTP, 28/28 targets UP.
+- [ ] Созданы репозиторий приложения, Dockerfile и образ в registry.
+- [ ] Тестовое приложение развёрнуто и доступно по HTTP.
+- [ ] Настроена блокировка удалённого Terraform state.
+- [ ] Настроен Terraform pipeline для каждого коммита в main.
+- [ ] Настроены сборка и push образа приложения при каждом коммите.
+- [ ] Настроен деплой версии приложения при создании Git-тега.
+- [ ] Подготовлена полная инструкция воспроизведения стенда.
 - [ ] Подготовлены ссылки и материалы для сдачи.
 
 ## Структура
 
 - terraform/bootstrap — сервисный аккаунт, IAM-роли, S3-ключ и бакет.
-- terraform/infrastructure — сеть и основная инфраструктура.
-- ansible — будущая конфигурация установки Kubernetes.
-- kubernetes — будущие манифесты и настройки Helm.
+- terraform/infrastructure — VPC, подсети, виртуальные машины и группы безопасности.
+- ansible — версия Kubespray, inventory и параметры Kubernetes.
+- kubernetes — манифесты и настройки Helm для Traefik и мониторинга.
+- scripts — генерация inventory, запуск Kubespray и настройка метрик kube-proxy.
 - docs — материалы для сдачи.
 
 ## Terraform
@@ -58,9 +66,12 @@ infrastructure/terraform.tfstate.
 
 ## Проверенный результат
 
-Созданы одна VPC и три подсети.
-Ресурсы доступны через terraform state list.
-Повторный terraform plan: No changes.
+Через Terraform созданы VPC, три подсети, три ВМ и группы безопасности.
+После создания ВМ повторный terraform plan показал No changes.
+Kubernetes: три узла Ready.
+Traefik принимает HTTP-трафик на обоих workers.
+Grafana отображает метрики, все 28 настроенных targets Prometheus UP.
+Тестовое приложение и CI/CD пока не развёрнуты.
 
 ## Установка Kubernetes
 
@@ -98,8 +109,10 @@ HTTP поступает на порт 80 публичного IP каждого 
 Service имеет тип ClusterIP. Облачный балансировщик не используется.
 
 IngressClass: traefik.
-До создания Ingress-маршрутов запросы возвращают HTTP 404.
-Проверка: docs/traefik-check.txt.
+Маршрут /grafana/ обслуживает Grafana.
+Корневой путь / пока возвращает HTTP 404: приложение ещё не развёрнуто.
+docs/traefik-check.txt — первоначальная проверка контроллера
+до создания маршрута Grafana.
 
 ## Мониторинг
 
@@ -107,7 +120,8 @@ IngressClass: traefik.
 Grafana: версия приложения 13.2.2, версия зависимого chart 13.2.6.
 
 Компоненты: Prometheus Operator, Prometheus, Grafana,
-Alertmanager, kube-state-metrics и node-exporter на всех трёх узлах.
+Alertmanager и kube-state-metrics.
+Node-exporter работает на каждом из трёх узлов.
 
 Конфигурация: kubernetes/monitoring.
 Grafana: http://158.160.20.63/grafana/
