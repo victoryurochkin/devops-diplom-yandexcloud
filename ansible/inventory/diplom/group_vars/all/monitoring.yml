@@ -1,0 +1,6 @@
+---
+# Метрики etcd на внутреннем IP узла и localhost.
+etcd_metrics_port: 2381
+
+# Доступ извне ограничен существующей группой безопасности.
+kube_proxy_metrics_bind_address: "0.0.0.0:10249"

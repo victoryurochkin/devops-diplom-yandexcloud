@@ -124,14 +124,39 @@ Prometheus хранит метрики до 2 дней с ограничение
 не сможет перенести данные на другой узел.
 Удаление ВМ вместе с диском уничтожает эти данные.
 
-Проверено: 22 из 22 настроенных targets UP, три узла Ready,
+Проверено: 28 из 28 настроенных targets UP, три узла Ready,
 метрики CPU и памяти доступны, dashboards Grafana отображают данные.
 Все три PVC находятся в состоянии Bound.
 
-Метрики etcd, scheduler, controller-manager и kube-proxy
-пока не подключены.
+Подключены метрики etcd, scheduler, controller-manager и kube-proxy.
+Сбор выполняется по внутренним адресам кластера.
 Внешние уведомления Alertmanager не настроены.
 
 Результаты проверки:
 - docs/monitoring-check.txt
 - docs/monitoring-metrics-check.txt
+- docs/monitoring-targets-check.txt
+
+### Настройки метрик компонентов Kubernetes
+
+Параметры Kubespray сохранены в
+ansible/inventory/diplom/group_vars/all/monitoring.yml.
+
+etcd публикует метрики на внутреннем адресе и localhost, порт 2381.
+Клиентский API etcd на порту 2379 использует TLS.
+
+kube-proxy публикует метрики на порту 10249.
+Доступ к портам метрик извне ограничен группами безопасности Terraform.
+
+Для уже установленного кластера изменение параметра Kubespray
+не обновило действующий ConfigMap kube-proxy. Настройка применена:
+1. python3 scripts/configure-kube-proxy-metrics.py
+2. kubectl -n kube-system rollout restart daemonset/kube-proxy
+3. kubectl -n kube-system rollout status daemonset/kube-proxy
+
+Скрипт сохраняет резервную копию ConfigMap в .secrets/kube-proxy-backups
+и меняет только metricsBindAddress.
+
+Для HTTPS endpoints scheduler и controller-manager используется
+токен Prometheus; проверка серверных сертификатов отключена
+в соответствующих ServiceMonitor.
