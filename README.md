@@ -17,12 +17,12 @@
 - [x] Установлен Kubernetes.
 - [x] Установлен Traefik, проверен входящий HTTP-трафик.
 - [x] Развёрнут мониторинг, Grafana доступна по HTTP, 28/28 targets UP.
-- [ ] Созданы репозиторий приложения, Dockerfile и образ в registry.
-- [ ] Тестовое приложение развёрнуто и доступно по HTTP.
+- [x] Созданы репозиторий приложения, Dockerfile и образ в registry.
+- [x] Тестовое приложение развёрнуто и доступно по HTTP.
 - [ ] Настроена блокировка удалённого Terraform state.
 - [ ] Настроен Terraform pipeline для каждого коммита в main.
-- [ ] Настроены сборка и push образа приложения при каждом коммите.
-- [ ] Настроен деплой версии приложения при создании Git-тега.
+- [x] Настроены сборка и push образа приложения при каждом коммите.
+- [x] Настроен деплой версии приложения при создании Git-тега.
 - [ ] Подготовлена полная инструкция воспроизведения стенда.
 - [ ] Подготовлены ссылки и материалы для сдачи.
 
@@ -71,7 +71,7 @@ infrastructure/terraform.tfstate.
 Kubernetes: три узла Ready.
 Traefik принимает HTTP-трафик на обоих workers.
 Grafana отображает метрики, все 28 настроенных targets Prometheus UP.
-Тестовое приложение и CI/CD пока не развёрнуты.
+Тестовое приложение развёрнуто. CI/CD приложения проверен на релизе v1.0.0. Terraform pipeline пока не настроен.
 
 ## Установка Kubernetes
 
@@ -110,7 +110,7 @@ Service имеет тип ClusterIP. Облачный балансировщик
 
 IngressClass: traefik.
 Маршрут /grafana/ обслуживает Grafana.
-Корневой путь / пока возвращает HTTP 404: приложение ещё не развёрнуто.
+Корневой путь / обслуживает тестовое приложение.
 docs/traefik-check.txt — первоначальная проверка контроллера
 до создания маршрута Grafana.
 
@@ -226,4 +226,59 @@ python3 scripts/create-registry-pull-secret.py
 Проверка: docs/app-check.txt.
 
 Первоначальная сборка, публикация и установка выполнены вручную.
-Автоматизация CI/CD пока не настроена.
+Последующие сборка, тестирование, публикация и деплой автоматизированы через GitHub Actions.
+
+## CI/CD приложения
+
+Workflow: .github/workflows/app.yml в репозитории devops-diplom-app.
+
+При push в любую ветку GitHub Actions собирает образ, проверяет
+конфигурацию nginx, HTTP-страницу и /healthz, затем публикует образ
+с тегом sha-<12 символов коммита>. При ошибке тестов публикация не выполняется.
+
+При push Git-тега создаётся образ с соответствующим Docker-тегом
+и OCI label org.opencontainers.image.version.
+После успешной сборки и тестов запускается деплой по digest,
+ожидание rollout и HTTP-проверки через оба worker.
+
+Сборка выполняется на GitHub-hosted runner ubuntu-24.04.
+Деплой выполняется на VM it через self-hosted runner
+diplom-app-deploy-it с меткой diplom-deploy.
+Runner работает как systemd-служба от пользователя diplom-runner,
+без членства в группах sudo и docker.
+
+Для публикации используется Actions Secret YC_REGISTRY_PUSHER_KEY.
+Kubeconfig деплоя находится локально на runner:
+ /home/diplom-runner/.kube/config
+Он использует ServiceAccount diplom-app/app-deployer.
+RBAC разрешает изменение Deployment diplom-app и чтение подов
+в namespace diplom-app.
+
+Проверенный релиз: v1.0.0.
+Образ: cr.yandex/crp15t94ei4mots103d9/devops-diplom-app:v1.0.0
+Digest: sha256:e7f328f227f530e7604c6afe04f148bff7543563dd982b61fbd4ad7ca8df4315
+
+Успешный запуск:
+https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36405099315
+
+После деплоя: Deployment 2/2, обе реплики Running,
+HTTP-проверки приложения прошли.
+
+Конфигурации доступа:
+- terraform/bootstrap/registry-pusher.tf
+- kubernetes/app/deployer-rbac.yaml
+- kubernetes/app/deployer-token.yaml
+- scripts/generate-deployer-kubeconfig.py
+
+deployer-token.yaml содержит только описание Secret.
+Сам токен создаётся Kubernetes и не включается в Git.
+Токен долгоживущий; автоматическая ротация не настроена.
+
+deployment.yaml закрепляет проверенный релиз v1.0.0 для воспроизведения.
+Последующие релизы обновляют образ через CD.
+Повторное применение этого манифеста вернёт закреплённую в нём версию.
+
+Результаты проверки:
+- docs/app-cicd-run.json
+- docs/app-release-check.txt
+- docs/github-runner-version.txt
