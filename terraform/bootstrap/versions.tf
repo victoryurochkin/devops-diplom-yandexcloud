@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.9.8, < 2.0.0"
+  required_version = "= 1.13.5"
 
   required_providers {
     yandex = {

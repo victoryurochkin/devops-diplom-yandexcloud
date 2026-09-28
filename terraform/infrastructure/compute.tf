@@ -37,8 +37,9 @@ resource "yandex_compute_instance" "node" {
   }
 
   network_interface {
-    subnet_id = yandex_vpc_subnet.diplom[each.value.subnet].id
-    nat       = true
+    subnet_id      = yandex_vpc_subnet.diplom[each.value.subnet].id
+    nat            = true
+    nat_ip_address = yandex_vpc_address.node[each.key].external_ipv4_address[0].address
 
     security_group_ids = concat(
       [yandex_vpc_security_group.cluster.id],

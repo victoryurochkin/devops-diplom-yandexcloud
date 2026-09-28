@@ -10,7 +10,8 @@ resource "yandex_container_registry" "diplom" {
     when = destroy
 
     command = <<-EOT
-      ../../.secrets/registry-tools/bin/python ../../scripts/cleanup-registry.py \
+      cd ../.. || exit 1
+      .secrets/registry-tools/bin/python scripts/cleanup-registry.py \
         --registry-id "$REGISTRY_ID" \
         --folder-id "$REGISTRY_FOLDER_ID" \
         --delete

@@ -1,3 +1,7 @@
+output "folder_id" {
+  value = var.folder_id
+}
+
 output "network_id" {
   value = yandex_vpc_network.diplom.id
 }

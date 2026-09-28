@@ -1,0 +1,49 @@
+name: Configuration checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.13.5"
+          terraform_wrapper: false
+      - name: Syntax and maintenance tests
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/check-tools"
+          "$RUNNER_TEMP/check-tools/bin/pip" install -r scripts/registry-tools-requirements.txt
+          python3 -m compileall -q scripts tests
+          for script in scripts/*.sh; do bash -n "$script"; done
+          "$RUNNER_TEMP/check-tools/bin/python" -m unittest discover -s tests -v
+      - name: Terraform format and validation
+        run: |
+          set -euo pipefail
+          terraform fmt -check -diff -recursive terraform
+          export TF_CLI_CONFIG_FILE="$RUNNER_TEMP/terraformrc"
+          cat > "$TF_CLI_CONFIG_FILE" <<'TFRC'
+          provider_installation {
+            network_mirror {
+              url = "https://terraform-mirror.yandexcloud.net/"
+              include = ["registry.terraform.io/yandex-cloud/yandex"]
+            }
+            direct {
+              exclude = ["registry.terraform.io/yandex-cloud/yandex"]
+            }
+          }
+          TFRC
+          for directory in bootstrap infrastructure; do
+            terraform -chdir="terraform/$directory" init -backend=false -lockfile=readonly -input=false
+            terraform -chdir="terraform/$directory" validate
+          done
