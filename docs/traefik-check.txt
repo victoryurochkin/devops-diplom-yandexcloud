@@ -1,0 +1,38 @@
+2026-09-28T10:52:08+03:00
+NAME: traefik
+LAST DEPLOYED: Mon Sep 28 10:49:07 2026
+NAMESPACE: ingress-system
+STATUS: deployed
+REVISION: 2
+TEST SUITE: None
+NOTES:
+traefik with docker.io/traefik:v3.7.13 has been deployed successfully on ingress-system namespace!
+NAME                     DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE   CONTAINERS   IMAGES                      SELECTOR
+daemonset.apps/traefik   2         2         2       2            2           <none>          25m   traefik      docker.io/traefik:v3.7.13   app.kubernetes.io/instance=traefik-ingress-system,app.kubernetes.io/name=traefik
+
+NAME                READY   STATUS    RESTARTS   AGE   IP               NODE       NOMINATED NODE   READINESS GATES
+pod/traefik-467zq   1/1     Running   0          25m   10.233.105.196   worker-1   <none>           <none>
+pod/traefik-rbv55   1/1     Running   0          25m   10.233.72.194    worker-2   <none>           <none>
+
+NAME              TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE   SELECTOR
+service/traefik   ClusterIP   10.233.23.126   <none>        80/TCP    25m   app.kubernetes.io/instance=traefik-ingress-system,app.kubernetes.io/name=traefik
+NAME                CONTROLLER                      PARAMETERS   AGE
+traefik (default)   traefik.io/ingress-controller   <none>       25m
+
+HTTP 158.160.20.63
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+X-Content-Type-Options: nosniff
+Date: Mon, 28 Sep 2026 07:52:09 GMT
+Content-Length: 19
+
+404 page not found
+
+HTTP 81.26.188.103
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+X-Content-Type-Options: nosniff
+Date: Mon, 28 Sep 2026 07:52:09 GMT
+Content-Length: 19
+
+404 page not found

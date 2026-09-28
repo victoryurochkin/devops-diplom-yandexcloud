@@ -1,0 +1,35 @@
+2026-09-28T11:13:24+03:00
+NAME      	NAMESPACE 	REVISION	UPDATED                                	STATUS  	CHART                       	APP VERSION
+monitoring	monitoring	1       	2026-09-28 10:56:41.365143713 +0300 MSK	deployed	kube-prometheus-stack-91.8.0	v0.94.1
+NAME                                            READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/monitoring-grafana              1/1     1            1           16m
+deployment.apps/monitoring-kube-state-metrics   1/1     1            1           16m
+deployment.apps/monitoring-operator             1/1     1            1           16m
+
+NAME                                                 DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+daemonset.apps/monitoring-prometheus-node-exporter   3         3         3       3            3           kubernetes.io/os=linux   16m
+
+NAME                                                    READY   AGE
+statefulset.apps/alertmanager-monitoring-alertmanager   1/1     16m
+statefulset.apps/prometheus-monitoring-prometheus       1/1     16m
+NAME                                                 READY   STATUS    RESTARTS   AGE   IP               NODE       NOMINATED NODE   READINESS GATES
+pod/alertmanager-monitoring-alertmanager-0           2/2     Running   0          16m   10.233.105.198   worker-1   <none>           <none>
+pod/monitoring-grafana-7ffdc6ff46-z5c8z              3/3     Running   0          16m   10.233.105.197   worker-1   <none>           <none>
+pod/monitoring-kube-state-metrics-7c4458b899-kkrqj   1/1     Running   0          16m   10.233.72.197    worker-2   <none>           <none>
+pod/monitoring-operator-86d87c79df-vhjl7             1/1     Running   0          16m   10.233.72.196    worker-2   <none>           <none>
+pod/monitoring-prometheus-node-exporter-6t62d        1/1     Running   0          16m   10.200.20.20     worker-1   <none>           <none>
+pod/monitoring-prometheus-node-exporter-ljb87        1/1     Running   0          16m   10.200.10.20     cp-1       <none>           <none>
+pod/monitoring-prometheus-node-exporter-nzj5m        1/1     Running   0          16m   10.200.30.34     worker-2   <none>           <none>
+pod/prometheus-monitoring-prometheus-0               2/2     Running   0          16m   10.233.72.198    worker-2   <none>           <none>
+
+NAME                                                                                                   STATUS   VOLUME                    CAPACITY   ACCESS MODES   STORAGECLASS       VOLUMEATTRIBUTESCLASS   AGE   VOLUMEMODE
+persistentvolumeclaim/alertmanager-monitoring-alertmanager-db-alertmanager-monitoring-alertmanager-0   Bound    monitoring-alertmanager   1Gi        RWO            monitoring-local   <unset>                 16m   Filesystem
+persistentvolumeclaim/monitoring-grafana                                                               Bound    monitoring-grafana        1Gi        RWO            monitoring-local   <unset>                 16m   Filesystem
+persistentvolumeclaim/prometheus-monitoring-prometheus-db-prometheus-monitoring-prometheus-0           Bound    monitoring-prometheus     10Gi       RWO            monitoring-local   <unset>                 16m   Filesystem
+
+NAME                                           CLASS     HOSTS   ADDRESS   PORTS   AGE
+ingress.networking.k8s.io/monitoring-grafana   traefik   *                 80      16m
+NAME                      CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                                                                                       STORAGECLASS       VOLUMEATTRIBUTESCLASS   REASON   AGE
+monitoring-prometheus     10Gi       RWO            Retain           Bound    monitoring/prometheus-monitoring-prometheus-db-prometheus-monitoring-prometheus-0           monitoring-local   <unset>                          19m
+monitoring-grafana        1Gi        RWO            Retain           Bound    monitoring/monitoring-grafana                                                               monitoring-local   <unset>                          19m
+monitoring-alertmanager   1Gi        RWO            Retain           Bound    monitoring/alertmanager-monitoring-alertmanager-db-alertmanager-monitoring-alertmanager-0   monitoring-local   <unset>                          19m

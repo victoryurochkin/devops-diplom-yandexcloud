@@ -1,0 +1,189 @@
+fullnameOverride: monitoring
+
+grafana:
+  enabled: true
+  replicas: 1
+
+  admin:
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+
+  deploymentStrategy:
+    type: Recreate
+
+  persistence:
+    enabled: true
+    type: pvc
+    storageClassName: monitoring-local
+    accessModes:
+      - ReadWriteOnce
+    size: 1Gi
+    selectorLabels:
+      diplom.storage/component: grafana
+
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hosts: []
+    path: /grafana
+    pathType: Prefix
+
+  grafana.ini:
+    server:
+      root_url: http://158.160.20.63/grafana/
+      serve_from_sub_path: true
+    users:
+      allow_sign_up: false
+    auth.anonymous:
+      enabled: false
+    analytics:
+      reporting_enabled: false
+      check_for_updates: false
+
+  readinessProbe:
+    httpGet:
+      path: /grafana/api/health
+      port: grafana
+
+  livenessProbe:
+    httpGet:
+      path: /grafana/api/health
+      port: grafana
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  sidecar:
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+    dashboards:
+      reloadURL: http://localhost:3000/grafana/api/admin/provisioning/dashboards/reload
+    datasources:
+      reloadURL: http://localhost:3000/grafana/api/admin/provisioning/datasources/reload
+
+  serviceMonitor:
+    path: /grafana/metrics
+
+prometheus:
+  prometheusSpec:
+    replicas: 1
+    retention: 2d
+    retentionSize: 5GiB
+    scrapeInterval: 30s
+    evaluationInterval: 30s
+
+    resources:
+      requests:
+        cpu: 300m
+        memory: 768Mi
+      limits:
+        cpu: 1000m
+        memory: 1536Mi
+
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: monitoring-local
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 10Gi
+          selector:
+            matchLabels:
+              diplom.storage/component: prometheus
+
+alertmanager:
+  alertmanagerSpec:
+    replicas: 1
+    retention: 48h
+
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: monitoring-local
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+          selector:
+            matchLabels:
+              diplom.storage/component: alertmanager
+
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+  prometheusConfigReloader:
+    resources:
+      requests:
+        cpu: 25m
+        memory: 32Mi
+      limits:
+        cpu: 100m
+        memory: 64Mi
+
+kube-state-metrics:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+prometheus-node-exporter:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 32Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+kubelet:
+  serviceMonitor:
+    cAdvisorInterval: 30s
+
+# Подключим отдельно после проверки endpoints и доступа к метрикам.
+kubeEtcd:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
+
+defaultRules:
+  rules:
+    etcd: false
+    kubeControllerManager: false
+    kubeSchedulerAlerting: false
+    kubeSchedulerRecording: false
+    kubeProxy: false

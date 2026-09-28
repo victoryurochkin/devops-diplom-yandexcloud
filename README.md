@@ -87,3 +87,51 @@ ID образа зафиксирован; при воспроизведении 
 
 Проверка: docs/kubernetes-check.txt.
 Все три узла Ready, системные поды Running.
+
+## Входящий HTTP-трафик
+
+Traefik установлен Helm chart 41.6.0, версия приложения 3.7.13.
+Настройки находятся в kubernetes/traefik.
+
+Контроллер работает как DaemonSet на двух worker-узлах.
+HTTP поступает на порт 80 публичного IP каждого worker через hostPort.
+Service имеет тип ClusterIP. Облачный балансировщик не используется.
+
+IngressClass: traefik.
+До создания Ingress-маршрутов запросы возвращают HTTP 404.
+Проверка: docs/traefik-check.txt.
+
+## Мониторинг
+
+Установлен kube-prometheus-stack, Helm chart 91.8.0.
+Grafana: версия приложения 13.2.2, версия зависимого chart 13.2.6.
+
+Компоненты: Prometheus Operator, Prometheus, Grafana,
+Alertmanager, kube-state-metrics и node-exporter на всех трёх узлах.
+
+Конфигурация: kubernetes/monitoring.
+Grafana: http://158.160.20.63/grafana/
+Учётные данные хранятся отдельно от Git.
+
+Prometheus хранит метрики до 2 дней с ограничением retentionSize 5GiB.
+Используются локальные PV:
+- Prometheus: worker-2, 10Gi.
+- Grafana: worker-1, 1Gi.
+- Alertmanager: worker-1, 1Gi.
+
+Размеры PV не являются дисковыми квотами.
+При недоступности узла использующий его локальный PV компонент
+не сможет перенести данные на другой узел.
+Удаление ВМ вместе с диском уничтожает эти данные.
+
+Проверено: 22 из 22 настроенных targets UP, три узла Ready,
+метрики CPU и памяти доступны, dashboards Grafana отображают данные.
+Все три PVC находятся в состоянии Bound.
+
+Метрики etcd, scheduler, controller-manager и kube-proxy
+пока не подключены.
+Внешние уведомления Alertmanager не настроены.
+
+Результаты проверки:
+- docs/monitoring-check.txt
+- docs/monitoring-metrics-check.txt
