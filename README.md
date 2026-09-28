@@ -75,9 +75,8 @@ CI-запуски выполняются последовательно с оч�
 отдельно, рабочему Terraform-аккаунту назначены сервисные роли без editor/admin
 на весь каталог.
 
-Публичные адреса описаны отдельными ресурсами Terraform и сохраняются при
-остановке ВМ. Для существующего стенда используется импорт текущих адресов,
-описанный в [инструкции эксплуатации](docs/REPRODUCE.md#перевод-существующего-стенда-на-новые-настройки).
+Публичные адреса описаны [отдельными ресурсами Terraform](terraform/infrastructure/addresses.tf)
+и сохраняются при остановке ВМ.
 
 На управляющем хосте it работает diplom-maintenance.timer: проверяет workers
 каждые две минуты и запускает остановленные ВМ; обновляет ограниченный токен CD.
@@ -95,9 +94,9 @@ restore-app.sh принимает digest образа в текущем Registry
 тесты безопасного выбора workers и выпуска токенов, Terraform fmt и validate.
 Рабочий Terraform workflow выполняет plan/apply только для основной конфигурации.
 
-Проверенный релиз приложения: v1.0.1.
+Проверенный релиз приложения: [v1.0.2](https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36449846882).
 
-    cr.yandex/crp77uvg5d2tuusdlk1f/devops-diplom-app:v1.0.1
+    cr.yandex/crp77uvg5d2tuusdlk1f/devops-diplom-app:v1.0.2
 
 В Deployment используется digest, зафиксированный в [манифесте](kubernetes/app/deployment.yaml).
 Манифест задаёт версию для первоначального развёртывания; текущий релиз после CD

@@ -1,15 +1,22 @@
-2026-09-28T16:36:33+03:00
-Релиз: v1.0.1
-Образ: cr.yandex/crp77uvg5d2tuusdlk1f/devops-diplom-app@sha256:f9640c98a09da6d87086a89b287399c73cf61229981097dc57f0bf8bb2ba24eb
-NAME                         READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                                                                                                                     SELECTOR
-deployment.apps/diplom-app   2/2     2            2           22m   nginx        cr.yandex/crp77uvg5d2tuusdlk1f/devops-diplom-app@sha256:f9640c98a09da6d87086a89b287399c73cf61229981097dc57f0bf8bb2ba24eb   app=diplom-app
+Проверка релиза: 2026-09-28, 19:17 МСК.
+Источник: GitHub Actions и вывод kubectl на управляющем хосте it.
+Запуск: https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36449846882
 
-NAME                              READY   STATUS    RESTARTS   AGE   IP               NODE       NOMINATED NODE   READINESS GATES
-pod/diplom-app-6d9866df5c-5rjrf   1/1     Running   0          15m   10.233.72.200    worker-2   <none>           <none>
-pod/diplom-app-6d9866df5c-5ztj4   1/1     Running   0          15m   10.233.105.201   worker-1   <none>           <none>
+Релиз: v1.0.2
+Коммит: a02d41fbe03d42272dc5f03381fa7db386ef3448
+Образ: cr.yandex/crp77uvg5d2tuusdlk1f/devops-diplom-app@sha256:0ffb78eac3a82faf5fdf93c697aa321e3bd921020a58a1ad918778060c4e2eab
 
-NAME                 TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)   AGE   SELECTOR
-service/diplom-app   ClusterIP   10.233.12.1   <none>        80/TCP    22m   app=diplom-app
+Build image: success
+Test image: success
+Push tested image: success
+Deploy published image: success
+Check public HTTP endpoints: success
 
-NAME                                   CLASS     HOSTS   ADDRESS   PORTS   AGE
-ingress.networking.k8s.io/diplom-app   traefik   *                 80      22m
+Deployment diplom-app: READY 2/2, UP-TO-DATE 2, AVAILABLE 2.
+diplom-app-84649dfbc5-mh7r7: 1/1 Running, worker-1, restarts 0.
+diplom-app-84649dfbc5-qh628: 1/1 Running, worker-2, restarts 0.
+Rollout: successfully rolled out.
+Образ Deployment совпадает с digest, переданным из job публикации.
+
+HTTP 158.160.31.109: page and healthz OK
+HTTP 158.160.228.171: page and healthz OK

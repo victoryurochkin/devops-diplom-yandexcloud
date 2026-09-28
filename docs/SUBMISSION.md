@@ -29,21 +29,21 @@
 
 Данные доступа Grafana передаются проверяющему в закрытой форме сдачи.
 
-Образ релиза v1.0.1:
+Образ релиза v1.0.2:
 
-    cr.yandex/crp77uvg5d2tuusdlk1f/devops-diplom-app:v1.0.1
+    cr.yandex/crp77uvg5d2tuusdlk1f/devops-diplom-app:v1.0.2
 
 Digest:
 
-    sha256:f9640c98a09da6d87086a89b287399c73cf61229981097dc57f0bf8bb2ba24eb
+    sha256:0ffb78eac3a82faf5fdf93c697aa321e3bd921020a58a1ad918778060c4e2eab
 
 Registry приватный; скачивание требует авторизации. Страница приложения публичная.
 
 ## Подтверждения
 
-- [Terraform plan/apply при push в main](https://github.com/victoryurochkin/devops-diplom-yandexcloud/actions/runs/36435019903).
-- [Сборка, тесты и публикация приложения при push](https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36429850386).
-- [Релиз v1.0.1: публикация и автоматический деплой](https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36427694065).
+- [Terraform plan/apply в main](https://github.com/victoryurochkin/devops-diplom-yandexcloud/actions/runs/36449731034).
+- [Сборка, тесты и публикация приложения при push](https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36448981647).
+- [Релиз v1.0.2: публикация и автоматический деплой](https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36449846882).
 - [Мониторинг: 28/28 targets UP](checks/monitoring.txt).
 - [Deployment 2/2 и HTTP-проверки приложения](checks/application.txt).
 - [Статические адреса, блокировка state и обновление доступа CD](checks/operations.txt).

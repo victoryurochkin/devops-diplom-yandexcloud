@@ -1,1 +1,113 @@
-{"conclusion":"success","databaseId":36427694065,"headBranch":"v1.0.1","headSha":"89d01f111db0c4fa325349466812b80357f59e71","jobs":[{"completedAt":"2026-09-28T13:21:23Z","conclusion":"success","databaseId":108946558877,"name":"build-test-push","startedAt":"2026-09-28T13:20:59Z","status":"completed","steps":[{"conclusion":"success","name":"Set up job","number":1,"status":"completed"},{"conclusion":"success","name":"Checkout","number":2,"status":"completed"},{"conclusion":"success","name":"Define image tag","number":3,"status":"completed"},{"conclusion":"success","name":"Build image","number":4,"status":"completed"},{"conclusion":"success","name":"Test image","number":5,"status":"completed"},{"conclusion":"success","name":"Login to Yandex Container Registry","number":6,"status":"completed"},{"conclusion":"success","name":"Push tested image","number":7,"status":"completed"},{"conclusion":"success","name":"Remove registry credentials","number":8,"status":"completed"},{"conclusion":"success","name":"Post Checkout","number":16,"status":"completed"},{"conclusion":"success","name":"Complete job","number":17,"status":"completed"}],"url":"https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36427694065/job/108946558877"},{"completedAt":"2026-09-28T13:21:38Z","conclusion":"success","databaseId":108946736292,"name":"Deploy tagged release","startedAt":"2026-09-28T13:21:26Z","status":"completed","steps":[{"conclusion":"success","name":"Set up job","number":1,"status":"completed"},{"conclusion":"success","name":"Deploy published image","number":2,"status":"completed"},{"conclusion":"success","name":"Check public HTTP endpoints","number":3,"status":"completed"},{"conclusion":"success","name":"Complete job","number":4,"status":"completed"}],"url":"https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36427694065/job/108946736292"}],"url":"https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36427694065"}
+{
+  "databaseId": 36449846882,
+  "headSha": "a02d41fbe03d42272dc5f03381fa7db386ef3448",
+  "headBranch": "v1.0.2",
+  "event": "push",
+  "status": "completed",
+  "conclusion": "success",
+  "url": "https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36449846882",
+  "createdAt": "2026-09-28T16:16:33Z",
+  "updatedAt": "2026-09-28T16:17:12Z",
+  "jobs": [
+    {
+      "databaseId": 109021475765,
+      "name": "build-test-push",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Define image tag",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Build image",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Test image",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Login to Yandex Container Registry",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Push tested image",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Remove registry credentials",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Post Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        }
+      ]
+    },
+    {
+      "databaseId": 109021646247,
+      "name": "Deploy tagged release",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Deploy published image",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Check public HTTP endpoints",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        }
+      ]
+    }
+  ]
+}

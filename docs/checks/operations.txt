@@ -1,5 +1,5 @@
-Проверка рабочего стенда: 2026-09-28, 18:59 МСК.
-Источник: вывод команд Terraform, kubectl и systemd на управляющем хосте it.
+Проверки рабочего стенда: 2026-09-28.
+Источник: вывод Terraform, kubectl и systemd на управляющем хосте it.
 
 Terraform 1.13.5; provider yandex-cloud/yandex 0.230.0.
 Публичные адреса зарезервированы и управляются Terraform:
@@ -8,7 +8,7 @@ worker-1: 158.160.31.109
 worker-2: 158.160.228.171
 Проверка конфигурации: No changes.
 
-S3 native lockfile:
+S3 native lockfile, проверка 18:59 МСК:
 Terraform console удерживает блокировку.
 Конкурирующий plan отклонён: HTTP 412.
 После штатного выхода из console: plan — No changes.
@@ -16,10 +16,13 @@ Terraform console удерживает блокировку.
 Kubernetes: cp-1, worker-1, worker-2 — Ready.
 Приложение diplom-app: Deployment 2/2; rollout successful.
 
+Обслуживание, проверка 19:15 МСК:
 diplom-maintenance.timer: active, enabled.
-Периодические запуски diplom-maintenance.service: success.
+diplom-maintenance.service: Result=success, ExecMainStatus=0.
 Workers: RUNNING.
-Краткоживущий kubeconfig CD обновлён повторно.
+Краткоживущий kubeconfig CD обновляется атомарно.
 Чтение Secrets для CD-runner: no.
-Постоянный Secret app-deployer-token удалён.
-Rollout через доступ CD-runner после удаления Secret: successful.
+Постоянного Secret app-deployer-token нет.
+Rollout через доступ CD-runner: successful.
+Kubectl использует временный кэш; каталог .kube в репозитории не создаётся.
+Git status не выводит предупреждение Permission denied.

@@ -116,8 +116,7 @@ vpc.externalStaticAddresses.count: для стенда нужны три адр�
     ./scripts/with-cloud-env.sh terraform -chdir=terraform/infrastructure plan
     ./scripts/with-cloud-env.sh terraform -chdir=terraform/infrastructure output -json nodes | python3 scripts/generate-inventory.py
 
-Повторный plan должен показать No changes. Для действующего стенда с динамическими
-IP сначала выполнить [импорт существующих адресов](#перевод-существующего-стенда-на-новые-настройки).
+Повторный plan должен показать No changes.
 S3 lockfile защищает локальные и CI-запуски; не использовать -lock=false.
 При прерывании Terraform не удалять lock вручную до проверки отсутствия работающего процесса.
 
@@ -341,42 +340,3 @@ worker-1 — grafana/alertmanager, worker-2 — prometheus. Затем верн�
 новым Registry, json_key и --digestfile; полученный digest передать restore-app.sh.
 При новой сборке использовать раздел 6. После восстановления выполнить sync-app-ci-vars.py,
 обновить адреса README/SUBMISSION, проверить приложение, мониторинг и новый релиз CI/CD.
-
-## Перевод существующего стенда на новые настройки
-
-Этот порядок сохраняет действующие IP и ВМ. Выполняется при переходе с Terraform
-без native S3 lockfile и с динамическими публичными адресами.
-
-1. Отключить Terraform workflow и дождаться завершения всех его запусков.
-   Сохранить основной и bootstrap state в защищённую копию.
-2. Установить Terraform из .terraform-version через scripts/install-terraform.sh.
-   Проверить terraform version. В текущем терминале сохранить настройку зеркала.
-3. Инициализировать неизменный S3 backend с новой настройкой блокировки:
-
-       ./scripts/with-cloud-env.sh terraform -chdir=terraform/infrastructure init -reconfigure -lockfile=readonly
-
-4. Проверить соответствие IP данным state. Подставить свой folder_id:
-
-       ./scripts/with-cloud-env.sh .secrets/registry-tools/bin/python scripts/adopt-public-addresses.py --folder-id b1g9bdu0ehutc09likpk
-
-5. После проверки списка выполнить ту же команду с --adopt. Скрипт резервирует
-   существующие адреса и импортирует их. Новые IP и ВМ он не создаёт.
-   Повторный запуск пропускает уже импортированные ресурсы. Если процесс прервался,
-   сначала повторить режим просмотра и проверить состояние.
-6. Сформировать сохранённый plan. Допустимы изменения имён/меток импортированных
-   адресов и outputs. Замены ВМ, смены IP, создания нового Registry или удаления
-   ресурсов быть не должно. При таком плане не выполнять apply.
-7. Применить проверенный план и получить No changes. Обновить CI Variables и
-   данные обслуживания через sync-app-ci-vars.py из раздела 7.
-8. Выполнить refresh-deployer-access.sh, проверить доступ runner, установить timer.
-   Только после успешного обновления удалить устаревший долгоживущий Secret:
-
-       kubectl -n diplom-app delete secret app-deployer-token --ignore-not-found
-
-9. Убедиться, что IP сохранились, три узла Ready, приложение 2/2, метрики UP,
-   timer включён и последняя служба завершилась успешно. Включить Terraform workflow
-   с той же закреплённой версией и проверить plan/apply.
-
-Совместимость native lockfile подтверждается успешным plan и тестом параллельного
-запуска на рабочем backend: второй процесс должен ждать или получить ошибку lock.
-Для этого не отключать блокировку и не удалять активный lock-объект.
