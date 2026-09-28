@@ -20,7 +20,7 @@
 - [x] Созданы репозиторий приложения, Dockerfile и образ в registry.
 - [x] Тестовое приложение развёрнуто и доступно по HTTP.
 - [ ] Настроена блокировка удалённого Terraform state.
-- [ ] Настроен Terraform pipeline для каждого коммита в main.
+- [x] Настроен Terraform pipeline для каждого коммита в main.
 - [x] Настроены сборка и push образа приложения при каждом коммите.
 - [x] Настроен деплой версии приложения при создании Git-тега.
 - [ ] Подготовлена полная инструкция воспроизведения стенда.
@@ -54,7 +54,9 @@ infrastructure/terraform.tfstate.
 Файлы .terraform.lock.hcl включены в репозиторий.
 
 Блокировка удалённого state пока не настроена.
-До её настройки Terraform запускается последовательно с одного хоста.
+CI-запуски сериализуются через GitHub Actions concurrency.
+Ручные запуски основной конфигурации выполняются только при отсутствии
+активных CI-запусков. Блокировки между CI и локальным Terraform нет.
 
 ## Сеть
 
@@ -71,7 +73,7 @@ infrastructure/terraform.tfstate.
 Kubernetes: три узла Ready.
 Traefik принимает HTTP-трафик на обоих workers.
 Grafana отображает метрики, все 28 настроенных targets Prometheus UP.
-Тестовое приложение развёрнуто. CI/CD приложения проверен на релизе v1.0.0. Terraform pipeline пока не настроен.
+Тестовое приложение развёрнуто. CI/CD приложения проверен на релизе v1.0.0. Terraform pipeline настроен: push в main запускает plan и apply.
 
 ## Установка Kubernetes
 
@@ -282,3 +284,47 @@ deployment.yaml закрепляет проверенный релиз v1.0.0 д
 - docs/app-cicd-run.json
 - docs/app-release-check.txt
 - docs/github-runner-version.txt
+
+## CI/CD инфраструктуры
+
+Workflow: .github/workflows/terraform.yml.
+
+Каждый push в main, включая изменения документации, запускает:
+1. Проверку форматирования Terraform.
+2. Инициализацию S3 backend и провайдера.
+3. Проверку конфигурации.
+4. Создание плана.
+5. Автоматическое применение сохранённого плана.
+
+Фильтров по путям файлов нет.
+Также доступен ручной запуск workflow; apply разрешён только в main.
+При ошибке планирования применение не выполняется.
+
+Runner: GitHub-hosted ubuntu-24.04.
+Terraform: 1.9.8.
+Провайдер: yandex-cloud/yandex 0.230.0, загружается через зеркало Yandex.
+Применяется terraform/infrastructure.
+Bootstrap выполняется отдельно с пользовательскими правами.
+
+GitHub Actions Secrets инфраструктурного репозитория:
+- YC_TERRAFORM_KEY
+- TF_STATE_ACCESS_KEY_ID
+- TF_STATE_SECRET_ACCESS_KEY
+- TF_VARS
+- TF_COMPUTE_VARS
+- TF_SSH_PUBLIC_KEY
+
+При изменении локальных tfvars нужно обновить соответствующие Secrets.
+TF_SSH_PUBLIC_KEY содержит только публичный SSH-ключ.
+
+Проверенный запуск:
+https://github.com/victoryurochkin/devops-diplom-yandexcloud/actions/runs/36408675311
+
+Результат: plan — No changes;
+apply — 0 added, 0 changed, 0 destroyed.
+Это подтверждает запуск apply из CI.
+Удаление и пересоздание инфраструктуры этим запуском не проверялись.
+
+Материалы:
+- docs/terraform-cicd-run.json
+- docs/terraform-cicd-check.txt
