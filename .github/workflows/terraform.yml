@@ -1,0 +1,135 @@
+name: Terraform infrastructure
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-infrastructure
+  cancel-in-progress: false
+
+jobs:
+  terraform:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    env:
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: "false"
+      TF_CLI_CONFIG_FILE: ${{ runner.temp }}/diplom.terraformrc
+      TF_DATA_DIR: ${{ runner.temp }}/diplom-tfdata
+      YC_SERVICE_ACCOUNT_KEY_FILE: ${{ runner.temp }}/diplom-terraform-key.json
+      AWS_ACCESS_KEY_ID: ${{ secrets.TF_STATE_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_STATE_SECRET_ACCESS_KEY }}
+      AWS_EC2_METADATA_DISABLED: "true"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.9.8"
+          terraform_wrapper: false
+
+      - name: Check formatting
+        run: terraform fmt -check -recursive terraform
+
+      - name: Prepare Terraform configuration
+        env:
+          YC_KEY: ${{ secrets.YC_TERRAFORM_KEY }}
+          TF_VARS_CONTENT: ${{ secrets.TF_VARS }}
+          TF_COMPUTE_CONTENT: ${{ secrets.TF_COMPUTE_VARS }}
+          SSH_PUBLIC_KEY: ${{ secrets.TF_SSH_PUBLIC_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+
+          test -n "$YC_KEY"
+          test -n "$TF_VARS_CONTENT"
+          test -n "$TF_COMPUTE_CONTENT"
+          test -n "$SSH_PUBLIC_KEY"
+          test -n "$AWS_ACCESS_KEY_ID"
+          test -n "$AWS_SECRET_ACCESS_KEY"
+
+          printf '%s\n' "$YC_KEY" > "$YC_SERVICE_ACCOUNT_KEY_FILE"
+          printf '%s\n' "$TF_VARS_CONTENT" \
+            > terraform/infrastructure/terraform.tfvars
+          printf '%s\n' "$TF_COMPUTE_CONTENT" \
+            > terraform/infrastructure/compute.auto.tfvars.json
+          printf '%s\n' "$SSH_PUBLIC_KEY" \
+            > "$RUNNER_TEMP/diplom-ssh.pub"
+
+          cat > "$TF_CLI_CONFIG_FILE" <<'TFRC'
+          provider_installation {
+            network_mirror {
+              url     = "https://terraform-mirror.yandexcloud.net/"
+              include = ["registry.terraform.io/yandex-cloud/yandex"]
+            }
+            direct {
+              exclude = ["registry.terraform.io/yandex-cloud/yandex"]
+            }
+          }
+          TFRC
+
+      - name: Terraform init
+        run: |
+          terraform -chdir=terraform/infrastructure init \
+            -input=false -no-color -lockfile=readonly
+
+      - name: Terraform validate
+        run: terraform -chdir=terraform/infrastructure validate -no-color
+
+      - name: Terraform plan
+        id: plan
+        run: |
+          set -euo pipefail
+          umask 077
+
+          PLAN_EXIT=0
+          terraform -chdir=terraform/infrastructure plan \
+            -input=false \
+            -no-color \
+            -detailed-exitcode \
+            -var="ssh_public_key_path=$RUNNER_TEMP/diplom-ssh.pub" \
+            -out="$RUNNER_TEMP/infrastructure.tfplan" \
+            || PLAN_EXIT=$?
+
+          case "$PLAN_EXIT" in
+            0)
+              printf 'Terraform plan: No changes.\n' \
+                >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            2)
+              printf 'Terraform plan contains changes; review the log.\n' \
+                >> "$GITHUB_STEP_SUMMARY"
+              printf '::warning::Terraform plan contains changes\n'
+              ;;
+            *)
+              exit "$PLAN_EXIT"
+              ;;
+          esac
+
+          printf 'exitcode=%s\n' "$PLAN_EXIT" >> "$GITHUB_OUTPUT"
+
+      - name: Clean temporary files
+        if: always()
+        run: |
+          rm -f -- \
+            "$YC_SERVICE_ACCOUNT_KEY_FILE" \
+            "$TF_CLI_CONFIG_FILE" \
+            "$RUNNER_TEMP/diplom-ssh.pub" \
+            "$RUNNER_TEMP/infrastructure.tfplan" \
+            terraform/infrastructure/terraform.tfvars \
+            terraform/infrastructure/compute.auto.tfvars.json
+          rm -rf -- "$TF_DATA_DIR"
