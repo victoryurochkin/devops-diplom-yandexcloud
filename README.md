@@ -224,7 +224,7 @@ python3 scripts/create-registry-pull-secret.py
 создаёт или обновляет Secret diplom-app/yc-registry.
 Ключ и содержимое Secret не включаются в Git.
 
-Применение манифестов: kubectl apply -f kubernetes/app/
+Восстановление приложения: scripts/restore-app.sh с digest опубликованного образа в качестве аргумента.
 Проверка: docs/app-check.txt.
 
 Первоначальная сборка, публикация и установка выполнены вручную.
@@ -380,3 +380,40 @@ StorageClass и PV unchanged, все три PVC Bound.
 
 Полное восстановление после удаления инфраструктуры
 этой проверкой ещё не подтверждено.
+
+## Восстановление приложения и доступа CD
+
+Скрипт: scripts/restore-app.sh.
+Единственный аргумент — digest опубликованного образа
+в формате sha256: и 64 шестнадцатеричных символа.
+
+Адрес репозитория образов берётся из Terraform output
+app_image_repository. Исходный deployment.yaml используется
+как шаблон; нужный образ подставляется перед применением.
+
+Скрипт:
+- Создаёт namespace и настраивает Secret доступа к Registry.
+- Применяет Deployment, Service и Ingress.
+- Ожидает завершения rollout и проверяет установленный образ.
+- Применяет ServiceAccount, Role, RoleBinding и Secret токена CD.
+- Генерирует kubeconfig app-deployer для текущего кластера.
+- Устанавливает его пользователю diplom-runner с правами 0600.
+- Сохраняет предыдущий kubeconfig runner в файл config.bak-*.
+- Проверяет доступ runner к Deployment.
+
+Запуск выполняется на управляющем хосте с установленным runner.
+Нужны административный kubeconfig, локальный bootstrap state,
+ключ registry-puller и sudo для установки kubeconfig runner.
+
+После пересоздания инфраструктуры:
+1. Установить Kubernetes и обновить административный kubeconfig.
+2. Синхронизировать CI Variables через scripts/sync-app-ci-vars.py.
+3. Собрать и опубликовать образ в актуальном Registry.
+4. Запустить scripts/restore-app.sh с digest этого образа.
+
+Проверено на существующем кластере:
+Deployment 2/2, digest сохранён, доступ CD-runner работает.
+Отчёт: docs/app-restore-check.txt.
+
+Эта проверка подтверждает повторный запуск скрипта.
+Полное восстановление после destroy ещё не проверено.
