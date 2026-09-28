@@ -174,3 +174,15 @@ kube-proxy публикует метрики на порту 10249.
 Для HTTPS endpoints scheduler и controller-manager используется
 токен Prometheus; проверка серверных сертификатов отключена
 в соответствующих ServiceMonitor.
+
+## Container Registry
+
+Через Terraform создан приватный Yandex Container Registry.
+Конфигурация: terraform/infrastructure/registry.tf.
+
+Registry ID: crp15t94ei4mots103d9.
+Адрес будущего образа:
+cr.yandex/crp15t94ei4mots103d9/devops-diplom-app.
+
+После создания повторный terraform plan показал No changes.
+Образ приложения пока не опубликован.
