@@ -328,3 +328,36 @@ apply — 0 added, 0 changed, 0 destroyed.
 Материалы:
 - docs/terraform-cicd-run.json
 - docs/terraform-cicd-check.txt
+
+### Адреса мониторинга из Terraform
+
+scripts/generate-monitoring-values.py получает JSON из
+terraform output -json nodes и создаёт
+.secrets/monitoring-runtime.json.
+
+Генерируются:
+- Внутренний адрес control plane для etcd, controller-manager и scheduler.
+- Публичный URL Grafana на основе адреса worker-1.
+
+Сгенерированный файл исключён из Git.
+
+Установка или обновление Helm-релиза:
+
+    ./scripts/deploy-monitoring.sh
+
+Скрипт получает доступ к S3 state через outputs локального bootstrap,
+повторно генерирует адреса, проверяет рендеринг и запускает Helm.
+Файл monitoring-runtime.json передаётся после основных values.
+
+Перед запуском должны быть подготовлены:
+- Доступ к кластеру через KUBECONFIG или ~/.kube/config.
+- Namespace monitoring и Secret grafana-admin.
+- Каталоги локального хранения на worker-узлах.
+- PV monitoring-prometheus, monitoring-grafana и monitoring-alertmanager.
+
+Проверено 28.09.2026: релиз monitoring обновлён до revision 4,
+все поды мониторинга готовы, три PVC Bound.
+Адреса в сохранённых Helm values совпадают с Terraform outputs.
+
+Полное восстановление после удаления инфраструктуры
+этой проверкой ещё не подтверждено.
