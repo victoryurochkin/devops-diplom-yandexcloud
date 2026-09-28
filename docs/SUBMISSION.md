@@ -46,6 +46,7 @@ Registry приватный; скачивание требует авториз�
 - [Релиз v1.0.1: публикация и автоматический деплой](https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36427694065).
 - [Мониторинг: 28/28 targets UP](checks/monitoring.txt).
 - [Deployment 2/2 и HTTP-проверки приложения](checks/application.txt).
+- [Статические адреса, блокировка state и обновление доступа CD](checks/operations.txt).
 
 ### Terraform CI/CD
 

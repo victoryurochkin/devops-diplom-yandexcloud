@@ -22,11 +22,14 @@ cleanup() {
 }
 trap cleanup EXIT
 
+export DIPLOM_KUBECTL_CACHE_DIR="$TOKEN_TMP/cache"
 python3 "$PROJECT_DIR/scripts/generate-deployer-kubeconfig.py" \
   --output "$TOKEN_TMP/config"
-kubectl --kubeconfig="$TOKEN_TMP/config" --request-timeout=30s \
+kubectl --cache-dir="$DIPLOM_KUBECTL_CACHE_DIR" \
+  --kubeconfig="$TOKEN_TMP/config" --request-timeout=30s \
   -n diplom-app get deployment diplom-app >/dev/null
-kubectl --kubeconfig="$TOKEN_TMP/config" --request-timeout=30s \
+kubectl --cache-dir="$DIPLOM_KUBECTL_CACHE_DIR" \
+  --kubeconfig="$TOKEN_TMP/config" --request-timeout=30s \
   -n diplom-app auth can-i patch deployment/diplom-app
 
 "${ROOT[@]}" install -d -o diplom-runner -g diplom-runner -m 0700 \

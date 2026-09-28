@@ -10,8 +10,12 @@ import tempfile
 
 
 def kubectl_json(*args):
+    command = ["kubectl", "--request-timeout=30s"]
+    cache = os.environ.get("DIPLOM_KUBECTL_CACHE_DIR")
+    if cache:
+        command += ["--cache-dir", cache]
     return json.loads(subprocess.check_output(
-        ["kubectl", "--request-timeout=30s", *args], text=True,
+        [*command, *args], text=True,
     ))
 
 

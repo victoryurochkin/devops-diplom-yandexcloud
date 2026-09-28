@@ -1,0 +1,25 @@
+Проверка рабочего стенда: 2026-09-28, 18:59 МСК.
+Источник: вывод команд Terraform, kubectl и systemd на управляющем хосте it.
+
+Terraform 1.13.5; provider yandex-cloud/yandex 0.230.0.
+Публичные адреса зарезервированы и управляются Terraform:
+cp-1: 51.250.67.37
+worker-1: 158.160.31.109
+worker-2: 158.160.228.171
+Проверка конфигурации: No changes.
+
+S3 native lockfile:
+Terraform console удерживает блокировку.
+Конкурирующий plan отклонён: HTTP 412.
+После штатного выхода из console: plan — No changes.
+
+Kubernetes: cp-1, worker-1, worker-2 — Ready.
+Приложение diplom-app: Deployment 2/2; rollout successful.
+
+diplom-maintenance.timer: active, enabled.
+Периодические запуски diplom-maintenance.service: success.
+Workers: RUNNING.
+Краткоживущий kubeconfig CD обновлён повторно.
+Чтение Secrets для CD-runner: no.
+Постоянный Secret app-deployer-token удалён.
+Rollout через доступ CD-runner после удаления Secret: successful.
