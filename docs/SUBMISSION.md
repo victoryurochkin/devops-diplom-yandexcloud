@@ -41,9 +41,10 @@ Registry приватный; скачивание требует авториз�
 
 ## Подтверждения
 
-- [Terraform plan/apply в main](https://github.com/victoryurochkin/devops-diplom-yandexcloud/actions/runs/36449731034).
-- [Сборка, тесты и публикация приложения при push](https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36448981647).
+- [Terraform plan/apply при push в main](https://github.com/victoryurochkin/devops-diplom-yandexcloud/actions/runs/36450662536).
+- [Сборка, тесты и публикация приложения при push](https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36450750256).
 - [Релиз v1.0.2: публикация и автоматический деплой](https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36449846882).
+- [Terraform: No changes, apply без изменений ресурсов](checks/terraform.txt).
 - [Мониторинг: 28/28 targets UP](checks/monitoring.txt).
 - [Deployment 2/2 и HTTP-проверки приложения](checks/application.txt).
 - [Статические адреса, блокировка state и обновление доступа CD](checks/operations.txt).

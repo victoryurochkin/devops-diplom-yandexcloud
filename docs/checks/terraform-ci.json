@@ -1,11 +1,105 @@
 {
-  "databaseId": 36449731034,
-  "headSha": "30efccc74d3f78557a44c3ca823d85558c911ab8",
+  "databaseId": 36450662536,
+  "headSha": "a030685a8661005f51e8f670f65da28cc6e43dbe",
   "headBranch": "main",
-  "event": "workflow_dispatch",
+  "event": "push",
   "status": "completed",
   "conclusion": "success",
-  "url": "https://github.com/victoryurochkin/devops-diplom-yandexcloud/actions/runs/36449731034",
-  "createdAt": "2026-09-28T16:15:34Z",
-  "updatedAt": "2026-09-28T16:16:20Z"
+  "url": "https://github.com/victoryurochkin/devops-diplom-yandexcloud/actions/runs/36450662536",
+  "createdAt": "2026-09-28T16:23:24Z",
+  "updatedAt": "2026-09-28T16:24:23Z",
+  "jobs": [
+    {
+      "databaseId": 109024286033,
+      "name": "terraform",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Set Terraform paths",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Install Terraform",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Install registry cleanup tools",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Check formatting",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Prepare Terraform configuration",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Terraform init",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Terraform validate",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Terraform plan",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Terraform apply",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Clean temporary files",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Post Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 24
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 25
+        }
+      ]
+    }
+  ]
 }
