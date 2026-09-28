@@ -7,7 +7,12 @@ Git, Docker, Python 3/venv, curl, sudo, Yandex Cloud CLI, GitHub CLI и Helm 3.
 ## 1. Исходные данные
 
 Настроить yc init для своего облака и каталога с действующим платёжным аккаунтом.
-Проверить квоты: три ВМ, три публичных адреса, SSD-диски по 30 ГБ.
+Проверить свободные квоты: три ВМ, три публичных адреса, SSD-диски по 30 ГБ.
+Отдельно проверить квоту статических публичных адресов
+vpc.externalStaticAddresses.count: для стенда нужны три адреса. Стандартное
+значение — два; увеличение запрашивается в разделе «Квоты» облака до создания
+или импорта адресов. Если в облаке есть другие статические IP, учесть их занятость.
+Подробнее: [квоты VPC](https://yandex.cloud/ru/docs/vpc/concepts/limits).
 Выполнить gh auth login и настроить SSH-доступ к GitHub.
 
     git clone git@github.com:victoryurochkin/devops-diplom-yandexcloud.git

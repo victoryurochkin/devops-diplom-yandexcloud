@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import subprocess
 
+import grpc
 from google.protobuf.field_mask_pb2 import FieldMask
 from yandex.cloud.compute.v1.instance_service_pb2 import GetInstanceRequest
 from yandex.cloud.compute.v1.instance_service_pb2_grpc import InstanceServiceStub
@@ -94,10 +95,21 @@ def main():
     write_json(backup, json.loads(tf("state", "pull")))
     for resource, address in candidates:
         if not address.reserved:
-            operation = addresses.Update(UpdateAddressRequest(
-                address_id=address.id, reserved=True,
-                update_mask=FieldMask(paths=["reserved"]),
-            ), timeout=30)
+            try:
+                operation = addresses.Update(UpdateAddressRequest(
+                    address_id=address.id, reserved=True,
+                    update_mask=FieldMask(paths=["reserved"]),
+                ), timeout=30)
+            except grpc.RpcError as error:
+                if (error.code() == grpc.StatusCode.RESOURCE_EXHAUSTED
+                        and "vpc.externalStaticAddresses.count" in (error.details() or "")):
+                    raise SystemExit(
+                        "Static public IP quota exhausted for " + resource + ". "
+                        "Increase vpc.externalStaticAddresses.count in the cloud quotas. "
+                        "Completed reservations and imports are preserved. "
+                        "Rerun --adopt after the quota increase; completed imports are skipped."
+                    ) from None
+                raise
             wait_operation(sdk, operation)
         if resource not in tracked:
             subprocess.run([
