@@ -37,7 +37,7 @@ spec:
               topologyKey: kubernetes.io/hostname
       containers:
         - name: nginx
-          image: cr.yandex/crp15t94ei4mots103d9/devops-diplom-app@sha256:e7f328f227f530e7604c6afe04f148bff7543563dd982b61fbd4ad7ca8df4315
+          image: cr.yandex/crp77uvg5d2tuusdlk1f/devops-diplom-app@sha256:f9640c98a09da6d87086a89b287399c73cf61229981097dc57f0bf8bb2ba24eb
           imagePullPolicy: Always
           ports:
             - name: http

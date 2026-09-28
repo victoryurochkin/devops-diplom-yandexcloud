@@ -31,7 +31,7 @@ grafana:
 
   grafana.ini:
     server:
-      root_url: http://158.160.20.63/grafana/
+      root_url: http://158.160.31.109/grafana/
       serve_from_sub_path: true
     users:
       allow_sign_up: false
@@ -174,7 +174,7 @@ kubelet:
 kubeEtcd:
   enabled: true
   endpoints:
-    - 10.200.10.20
+    - 10.200.10.33
   service:
     port: 2381
     targetPort: 2381
@@ -184,7 +184,7 @@ kubeEtcd:
 kubeControllerManager:
   enabled: true
   endpoints:
-    - 10.200.10.20
+    - 10.200.10.33
   service:
     port: 10257
     targetPort: 10257
@@ -195,7 +195,7 @@ kubeControllerManager:
 kubeScheduler:
   enabled: true
   endpoints:
-    - 10.200.10.20
+    - 10.200.10.33
   service:
     port: 10259
     targetPort: 10259

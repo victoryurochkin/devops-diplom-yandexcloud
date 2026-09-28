@@ -12,14 +12,13 @@
 - [x] Основной Terraform state хранится в S3.
 - [x] От сервисного аккаунта созданы VPC и три подсети.
 - [x] Повторный terraform plan подтверждает отсутствие изменений.
-- [ ] Проверено удаление и повторное создание основной инфраструктуры.
+- [x] Проверено удаление и повторное создание основной инфраструктуры.
 - [x] Созданы виртуальные машины и группы безопасности.
 - [x] Установлен Kubernetes.
 - [x] Установлен Traefik, проверен входящий HTTP-трафик.
 - [x] Развёрнут мониторинг, Grafana доступна по HTTP, 28/28 targets UP.
 - [x] Созданы репозиторий приложения, Dockerfile и образ в registry.
 - [x] Тестовое приложение развёрнуто и доступно по HTTP.
-- [ ] Настроена блокировка удалённого Terraform state.
 - [x] Настроен Terraform pipeline для каждого коммита в main.
 - [x] Настроены сборка и push образа приложения при каждом коммите.
 - [x] Настроен деплой версии приложения при создании Git-тега.
@@ -73,7 +72,7 @@ CI-запуски сериализуются через GitHub Actions concurren
 Kubernetes: три узла Ready.
 Traefik принимает HTTP-трафик на обоих workers.
 Grafana отображает метрики, все 28 настроенных targets Prometheus UP.
-Тестовое приложение развёрнуто. CI/CD приложения проверен на релизе v1.0.0. Terraform pipeline настроен: push в main запускает plan и apply.
+Тестовое приложение развёрнуто. CI/CD приложения проверен на релизе v1.0.1 после пересоздания кластера. Terraform pipeline настроен: push в main запускает plan и apply.
 
 ## Установка Kubernetes
 
@@ -126,7 +125,7 @@ Alertmanager и kube-state-metrics.
 Node-exporter работает на каждом из трёх узлов.
 
 Конфигурация: kubernetes/monitoring.
-Grafana: http://158.160.20.63/grafana/
+Grafana: http://158.160.31.109/grafana/
 Учётные данные хранятся отдельно от Git.
 
 Prometheus хранит метрики до 2 дней с ограничением retentionSize 5GiB.
@@ -182,9 +181,9 @@ kube-proxy публикует метрики на порту 10249.
 Через Terraform создан приватный Yandex Container Registry.
 Конфигурация: terraform/infrastructure/registry.tf.
 
-Registry ID: crp15t94ei4mots103d9.
+Registry ID: crp77uvg5d2tuusdlk1f.
 Репозиторий образов:
-cr.yandex/crp15t94ei4mots103d9/devops-diplom-app.
+cr.yandex/crp77uvg5d2tuusdlk1f/devops-diplom-app.
 
 После создания повторный terraform plan показал No changes.
 Образ приложения опубликован и развёрнут в Kubernetes.
@@ -197,11 +196,11 @@ cr.yandex/crp15t94ei4mots103d9/devops-diplom-app.
 Контейнер работает от пользователя nginx и слушает порт 8080.
 Локальные тесты проверяют конфигурацию nginx, страницу и /healthz.
 
-Опубликованный образ:
-cr.yandex/crp15t94ei4mots103d9/devops-diplom-app:sha-1b7778c23249
+Текущий проверенный образ:
+cr.yandex/crp77uvg5d2tuusdlk1f/devops-diplom-app:v1.0.1
 
-Первоначальный деплой закреплён по digest:
-sha256:712f10775bde4162e63adec9b3d37a0768c9a230ee9fc10e64d6fd3cc9820ddf
+Деплой закреплён по digest:
+sha256:f9640c98a09da6d87086a89b287399c73cf61229981097dc57f0bf8bb2ba24eb
 
 Манифесты: kubernetes/app.
 Namespace: diplom-app.
@@ -211,8 +210,8 @@ Ingress класса traefik обслуживает путь /.
 Путь /grafana/ продолжает обслуживаться мониторингом.
 
 Адреса приложения:
-- http://158.160.20.63/
-- http://81.26.188.103/
+- http://158.160.31.109/
+- http://158.160.228.171/
 
 Для скачивания образов Terraform bootstrap создаёт отдельный сервисный
 аккаунт с ролью container-registry.images.puller на каталог диплома.
@@ -256,12 +255,15 @@ Kubeconfig деплоя находится локально на runner:
 RBAC разрешает изменение Deployment diplom-app и чтение подов
 в namespace diplom-app.
 
-Проверенный релиз: v1.0.0.
-Образ: cr.yandex/crp15t94ei4mots103d9/devops-diplom-app:v1.0.0
-Digest: sha256:e7f328f227f530e7604c6afe04f148bff7543563dd982b61fbd4ad7ca8df4315
+Проверенный релиз в пересозданном кластере: v1.0.1.
+Образ: cr.yandex/crp77uvg5d2tuusdlk1f/devops-diplom-app:v1.0.1
+Digest: sha256:f9640c98a09da6d87086a89b287399c73cf61229981097dc57f0bf8bb2ba24eb
 
-Успешный запуск:
-https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36405099315
+Успешный запуск (попытка 2):
+https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36427694065
+
+Первая попытка остановилась при публикации с ответом Registry HTTP 503.
+Повторный запуск завершил сборку, тесты, публикацию и деплой.
 
 После деплоя: Deployment 2/2, обе реплики Running,
 HTTP-проверки приложения прошли.
@@ -276,7 +278,7 @@ deployer-token.yaml содержит только описание Secret.
 Сам токен создаётся Kubernetes и не включается в Git.
 Токен долгоживущий; автоматическая ротация не настроена.
 
-deployment.yaml закрепляет проверенный релиз v1.0.0 для воспроизведения.
+deployment.yaml закрепляет проверенный релиз v1.0.1 для воспроизведения.
 Последующие релизы обновляют образ через CD.
 Повторное применение этого манифеста вернёт закреплённую в нём версию.
 
@@ -374,12 +376,14 @@ StorageClass и PV unchanged, все три PVC Bound.
 Резервная копия Secret содержит только учётные данные;
 данные локальных PV в неё не входят.
 
-Проверено 28.09.2026: релиз monitoring обновлён до revision 4,
+На первоначальном кластере 28.09.2026 релиз monitoring обновлён до revision 4,
 все поды мониторинга готовы, три PVC Bound.
 Адреса в сохранённых Helm values совпадают с Terraform outputs.
 
-Полное восстановление после удаления инфраструктуры
-этой проверкой ещё не подтверждено.
+После пересоздания кластера восстановлены данные локальных PV и Secret Grafana.
+Все 28 targets UP. Проверены исторические метрики старых узлов
+за 28.09.2026 14:00 МСК и текущие метрики трёх новых узлов.
+Отчёты: docs/monitoring-after-recreate-check.txt и docs/monitoring-history-check.txt.
 
 ## Восстановление приложения и доступа CD
 
@@ -415,8 +419,10 @@ app_image_repository. Исходный deployment.yaml используется
 Deployment 2/2, digest сохранён, доступ CD-runner работает.
 Отчёт: docs/app-restore-check.txt.
 
-Эта проверка подтверждает повторный запуск скрипта.
-Полное восстановление после destroy ещё не проверено.
+Повторный запуск скрипта проверен до удаления инфраструктуры.
+После destroy приложение восстановлено из архива в новый Registry и кластер.
+Затем GitHub Actions автоматически развернул релиз v1.0.1.
+Отчёты: docs/app-after-recreate-check.txt и docs/app-cicd-after-recreate-run.json.
 
 ## Очистка Container Registry при удалении инфраструктуры
 
@@ -451,5 +457,50 @@ terraform -chdir=terraform/infrastructure.
 Удаление образов необратимо. При ошибке очистки удаление Registry
 останавливается; другие ресурсы к этому моменту могут быть уже удалены.
 
-Проверен режим просмотра через Terraform-аккаунт: получены восемь образов.
-Реальное удаление и полное пересоздание этим тестом не проверялись.
+28.09.2026 проверено реальное удаление: скрипт очистил восемь образов,
+после чего Terraform удалил Registry. Основная конфигурация удалила
+10 ресурсов и повторно создала 10 ресурсов; итоговый plan — No changes.
+Ресурсы bootstrap и бакет со state сохранены.
+
+## Проверка пересоздания 28.09.2026
+
+Выполнен полный цикл удаления и создания основной Terraform-конфигурации:
+10 ресурсов удалены, затем 10 созданы. Bootstrap и S3 backend сохранены.
+Kubernetes установлен заново через Kubespray, все три узла Ready.
+
+| Узел | Внутренний IP | Публичный IP |
+|---|---|---|
+| cp-1 | 10.200.10.33 | 51.250.67.37 |
+| worker-1 | 10.200.20.12 | 158.160.31.109 |
+| worker-2 | 10.200.30.3 | 158.160.228.171 |
+
+После установки восстановлены Traefik, мониторинг и приложение.
+Данные мониторинга перенесены из резервных архивов локальных PV.
+Подтверждены история старого кластера и сбор метрик новых узлов.
+
+Образ v1.0.0 восстановлен из Docker-архива через Skopeo.
+Digest конфигурации совпал с конфигурацией внутри архива.
+Digest опубликованного манифеста изменился при перепубликации.
+После восстановления CI/CD автоматически развернул новый релиз v1.0.1.
+
+Параметры IMAGE_REPOSITORY и APP_WORKER_IPS синхронизированы из Terraform.
+Kubeconfig CD-runner обновлён для нового кластера. Оба workflow включены.
+
+Terraform CI после пересоздания:
+https://github.com/victoryurochkin/devops-diplom-yandexcloud/actions/runs/36428567431
+
+Результат: plan — No changes; apply — 0 added, 0 changed, 0 destroyed.
+Этот запуск выполнен вручную через workflow_dispatch на main;
+автоматический запуск при push в main также включён.
+
+Материалы после пересоздания:
+
+- docs/monitoring-after-recreate-check.txt
+- docs/monitoring-history-check.txt
+- docs/app-after-recreate-check.txt
+- docs/app-release-after-recreate-check.txt
+- docs/app-cicd-after-recreate-run.json
+- docs/terraform-cicd-after-recreate-run.json
+
+Первоначальные отчёты сохранены как история и могут содержать старые адреса.
+Полные архивы, state, ключи и резервные копии хранятся вне Git.

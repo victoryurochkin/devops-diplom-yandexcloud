@@ -1,0 +1,34 @@
+2026-09-28T12:53:14.343963+00:00
+Targets: 28, UP: 28; kube-etcd: 1, kube-controller-manager: 1, kube-scheduler: 1, kube-proxy: 3, node-exporter: 3
+
+Состояние targets:
+UP kube-proxy http://10.200.10.33:10249/metrics
+UP kube-etcd http://10.200.10.33:2381/metrics
+UP node-exporter http://10.200.10.33:9100/metrics
+UP kube-proxy http://10.200.20.12:10249/metrics
+UP node-exporter http://10.200.20.12:9100/metrics
+UP kube-proxy http://10.200.30.3:10249/metrics
+UP node-exporter http://10.200.30.3:9100/metrics
+UP coredns http://10.233.105.193:9153/metrics
+UP monitoring-grafana http://10.233.105.197:3000/grafana/metrics
+UP monitoring-alertmanager http://10.233.105.198:8080/metrics
+UP monitoring-alertmanager http://10.233.105.198:9093/metrics
+UP coredns http://10.233.72.195:9153/metrics
+UP kube-state-metrics http://10.233.72.197:8080/metrics
+UP monitoring-prometheus http://10.233.72.198:8080/metrics
+UP monitoring-prometheus http://10.233.72.198:9090/metrics
+UP kubelet https://10.200.10.33:10250/metrics
+UP kubelet https://10.200.10.33:10250/metrics/cadvisor
+UP kubelet https://10.200.10.33:10250/metrics/probes
+UP kube-controller-manager https://10.200.10.33:10257/metrics
+UP kube-scheduler https://10.200.10.33:10259/metrics
+UP apiserver https://10.200.10.33:6443/metrics
+UP kubelet https://10.200.20.12:10250/metrics
+UP kubelet https://10.200.20.12:10250/metrics/cadvisor
+UP kubelet https://10.200.20.12:10250/metrics/probes
+UP kubelet https://10.200.30.3:10250/metrics
+UP kubelet https://10.200.30.3:10250/metrics/cadvisor
+UP kubelet https://10.200.30.3:10250/metrics/probes
+UP monitoring-operator https://10.233.105.196:10250/metrics
+
+Сбор метрик после пересоздания кластера работает.

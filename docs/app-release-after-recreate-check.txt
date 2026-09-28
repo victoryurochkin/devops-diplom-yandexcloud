@@ -1,0 +1,15 @@
+2026-09-28T16:36:33+03:00
+Проверенный релиз: v1.0.1
+Образ: cr.yandex/crp77uvg5d2tuusdlk1f/devops-diplom-app@sha256:f9640c98a09da6d87086a89b287399c73cf61229981097dc57f0bf8bb2ba24eb
+NAME                         READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                                                                                                                     SELECTOR
+deployment.apps/diplom-app   2/2     2            2           22m   nginx        cr.yandex/crp77uvg5d2tuusdlk1f/devops-diplom-app@sha256:f9640c98a09da6d87086a89b287399c73cf61229981097dc57f0bf8bb2ba24eb   app=diplom-app
+
+NAME                              READY   STATUS    RESTARTS   AGE   IP               NODE       NOMINATED NODE   READINESS GATES
+pod/diplom-app-6d9866df5c-5rjrf   1/1     Running   0          15m   10.233.72.200    worker-2   <none>           <none>
+pod/diplom-app-6d9866df5c-5ztj4   1/1     Running   0          15m   10.233.105.201   worker-1   <none>           <none>
+
+NAME                 TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)   AGE   SELECTOR
+service/diplom-app   ClusterIP   10.233.12.1   <none>        80/TCP    22m   app=diplom-app
+
+NAME                                   CLASS     HOSTS   ADDRESS   PORTS   AGE
+ingress.networking.k8s.io/diplom-app   traefik   *                 80      22m
