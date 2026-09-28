@@ -1,0 +1,31 @@
+2026-09-28T12:08:18+03:00
+NAME                         READY   UP-TO-DATE   AVAILABLE   AGE    CONTAINERS   IMAGES                                                                                                                     SELECTOR
+deployment.apps/diplom-app   2/2     2            2           105s   nginx        cr.yandex/crp15t94ei4mots103d9/devops-diplom-app@sha256:712f10775bde4162e63adec9b3d37a0768c9a230ee9fc10e64d6fd3cc9820ddf   app=diplom-app
+
+NAME                              READY   STATUS    RESTARTS   AGE    IP               NODE       NOMINATED NODE   READINESS GATES
+pod/diplom-app-67b5fbd449-d454m   1/1     Running   0          105s   10.233.72.199    worker-2   <none>           <none>
+pod/diplom-app-67b5fbd449-rdblv   1/1     Running   0          105s   10.233.105.204   worker-1   <none>           <none>
+
+NAME                 TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE    SELECTOR
+service/diplom-app   ClusterIP   10.233.45.119   <none>        80/TCP    105s   app=diplom-app
+
+NAME                                   CLASS     HOSTS   ADDRESS   PORTS   AGE
+ingress.networking.k8s.io/diplom-app   traefik   *                 80      105s
+
+Приложение http://158.160.20.63/
+Страница и содержимое: OK
+healthz: OK
+Grafana: {
+  "database": "ok",
+  "version": "13.2.2",
+  "commit": "1bea008f7e4e858b6824c9e364d608bd4d10b13a"
+}
+
+Приложение http://81.26.188.103/
+Страница и содержимое: OK
+healthz: OK
+Grafana: {
+  "database": "ok",
+  "version": "13.2.2",
+  "commit": "1bea008f7e4e858b6824c9e364d608bd4d10b13a"
+}

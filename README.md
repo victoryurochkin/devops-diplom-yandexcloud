@@ -181,8 +181,49 @@ kube-proxy публикует метрики на порту 10249.
 Конфигурация: terraform/infrastructure/registry.tf.
 
 Registry ID: crp15t94ei4mots103d9.
-Адрес будущего образа:
+Репозиторий образов:
 cr.yandex/crp15t94ei4mots103d9/devops-diplom-app.
 
 После создания повторный terraform plan показал No changes.
-Образ приложения пока не опубликован.
+Образ приложения опубликован и развёрнут в Kubernetes.
+
+## Тестовое приложение
+
+Репозиторий: https://github.com/victoryurochkin/devops-diplom-app
+
+Статическая HTML-страница с собственными Dockerfile и nginx.conf.
+Контейнер работает от пользователя nginx и слушает порт 8080.
+Локальные тесты проверяют конфигурацию nginx, страницу и /healthz.
+
+Опубликованный образ:
+cr.yandex/crp15t94ei4mots103d9/devops-diplom-app:sha-1b7778c23249
+
+Первоначальный деплой закреплён по digest:
+sha256:712f10775bde4162e63adec9b3d37a0768c9a230ee9fc10e64d6fd3cc9820ddf
+
+Манифесты: kubernetes/app.
+Namespace: diplom-app.
+Deployment содержит две реплики на разных worker-узлах.
+Service ClusterIP направляет трафик с порта 80 на порт контейнера 8080.
+Ingress класса traefik обслуживает путь /.
+Путь /grafana/ продолжает обслуживаться мониторингом.
+
+Адреса приложения:
+- http://158.160.20.63/
+- http://81.26.188.103/
+
+Для скачивания образов Terraform bootstrap создаёт отдельный сервисный
+аккаунт с ролью container-registry.images.puller на каталог диплома.
+Авторизованный ключ создаётся отдельно через yc CLI и хранится локально
+в .secrets/registry-puller-key.json.
+
+После создания namespace команда
+python3 scripts/create-registry-pull-secret.py
+создаёт или обновляет Secret diplom-app/yc-registry.
+Ключ и содержимое Secret не включаются в Git.
+
+Применение манифестов: kubectl apply -f kubernetes/app/
+Проверка: docs/app-check.txt.
+
+Первоначальная сборка, публикация и установка выполнены вручную.
+Автоматизация CI/CD пока не настроена.
