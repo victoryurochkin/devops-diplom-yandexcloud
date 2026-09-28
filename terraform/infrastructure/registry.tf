@@ -6,4 +6,19 @@ resource "yandex_container_registry" "diplom" {
     project    = "devops-diplom"
     managed_by = "terraform"
   }
+  provisioner "local-exec" {
+    when = destroy
+
+    command = <<-EOT
+      ../../.secrets/registry-tools/bin/python ../../scripts/cleanup-registry.py \
+        --registry-id "$REGISTRY_ID" \
+        --folder-id "$REGISTRY_FOLDER_ID" \
+        --delete
+    EOT
+
+    environment = {
+      REGISTRY_ID        = self.id
+      REGISTRY_FOLDER_ID = self.folder_id
+    }
+  }
 }

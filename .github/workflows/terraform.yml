@@ -48,6 +48,20 @@ jobs:
           terraform_version: "1.9.8"
           terraform_wrapper: false
 
+      - name: Install registry cleanup tools
+        run: |
+          set -euo pipefail
+          umask 077
+
+          python3 -m venv .secrets/registry-tools
+
+          .secrets/registry-tools/bin/python -m pip install \
+            --disable-pip-version-check \
+            -r scripts/registry-tools-requirements.txt
+
+          .secrets/registry-tools/bin/python \
+            scripts/cleanup-registry.py --help > /dev/null
+
       - name: Check formatting
         run: terraform fmt -check -recursive terraform
 
@@ -154,4 +168,5 @@ jobs:
             "$RUNNER_TEMP/infrastructure.tfplan" \
             terraform/infrastructure/terraform.tfvars \
             terraform/infrastructure/compute.auto.tfvars.json
-          rm -rf -- "$TF_DATA_DIR"
+          rm -rf -- "$TF_DATA_DIR" \
+            "$GITHUB_WORKSPACE/.secrets/registry-tools"
