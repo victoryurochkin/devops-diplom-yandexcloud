@@ -121,6 +121,13 @@ IP сначала выполнить [импорт существующих ад
 S3 lockfile защищает локальные и CI-запуски; не использовать -lock=false.
 При прерывании Terraform не удалять lock вручную до проверки отсутствия работающего процесса.
 
+Проверка блокировки при отсутствии активных Terraform-запусков:
+
+    ./scripts/with-cloud-env.sh python3 scripts/check-state-lock.py
+
+Скрипт удерживает lock через terraform console, проверяет отказ конкурирующего
+plan и успешный план после штатного выхода из консоли. Apply не выполняется.
+
 ## 4. Kubernetes
 
 Получить SSH host key fingerprints из serial port каждой ВМ через консоль
