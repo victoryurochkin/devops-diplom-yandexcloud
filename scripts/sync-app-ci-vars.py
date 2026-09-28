@@ -11,6 +11,11 @@ import sys
 outputs = json.load(sys.stdin)
 nodes = outputs["nodes"]["value"]
 repository = outputs["app_image_repository"]["value"]
+selected = {name: outputs[name] for name in ("folder_id", "nodes")}
+if not re.fullmatch(r"[a-z0-9]+", selected["folder_id"]["value"]):
+    raise SystemExit("Неожиданный ID каталога")
+if set(nodes) != {"cp-1", "worker-1", "worker-2"}:
+    raise SystemExit("Неожиданный список узлов")
 
 if not re.fullmatch(
     r"cr\.yandex/[a-z0-9]+/devops-diplom-app",
@@ -46,7 +51,6 @@ for name, value in values.items():
 project = Path(__file__).resolve().parent.parent
 path = project / ".secrets/maintenance-outputs.json"
 path.parent.mkdir(parents=True, exist_ok=True)
-selected = {name: outputs[name] for name in ("folder_id", "nodes")}
 with tempfile.NamedTemporaryFile(mode="w", dir=path.parent, delete=False) as output:
     temporary = Path(output.name)
     os.fchmod(output.fileno(), 0o600)

@@ -9,15 +9,22 @@ test "$(uname -m)" = x86_64
 TF_TMP="$(mktemp -d)"
 trap 'rm -rf -- "$TF_TMP"' EXIT
 TF_ARCHIVE="terraform_${TF_VERSION}_linux_amd64.zip"
-TF_BASE="https://releases.hashicorp.com/terraform/$TF_VERSION"
-curl --fail --location --retry 3 --connect-timeout 10 --max-time 180 \
-  "$TF_BASE/$TF_ARCHIVE" -o "$TF_TMP/$TF_ARCHIVE"
-curl --fail --location --retry 3 --connect-timeout 10 --max-time 60 \
-  "$TF_BASE/terraform_${TF_VERSION}_SHA256SUMS" -o "$TF_TMP/SHA256SUMS"
+awk -v name="$TF_ARCHIVE" '$2 == name {print}' \
+  "$PROJECT_DIR/terraform/SHA256SUMS" > "$TF_TMP/selected-checksum"
+test "$(wc -l < "$TF_TMP/selected-checksum")" -eq 1
+TF_DOWNLOADED=false
+for TF_HOST in releases.hashicorp.com hashicorp-releases.yandexcloud.net; do
+  if curl --fail --location --retry 3 --connect-timeout 10 --max-time 180 \
+    "https://$TF_HOST/terraform/$TF_VERSION/$TF_ARCHIVE" \
+    -o "$TF_TMP/$TF_ARCHIVE"
+  then
+    TF_DOWNLOADED=true
+    break
+  fi
+done
+test "$TF_DOWNLOADED" = true
 (
   cd "$TF_TMP"
-  awk -v name="$TF_ARCHIVE" '$2 == name {print}' SHA256SUMS > selected-checksum
-  test "$(wc -l < selected-checksum)" -eq 1
   sha256sum --check selected-checksum
 )
 python3 - "$TF_TMP/$TF_ARCHIVE" "$TF_TMP" <<'PY'

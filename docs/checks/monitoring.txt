@@ -31,4 +31,4 @@ UP kubelet https://10.200.30.3:10250/metrics/cadvisor
 UP kubelet https://10.200.30.3:10250/metrics/probes
 UP monitoring-operator https://10.233.105.196:10250/metrics
 
-Сбор метрик после пересоздания кластера работает.
+Сбор метрик кластера работает.
