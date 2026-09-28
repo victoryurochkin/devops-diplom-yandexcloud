@@ -1,115 +1,68 @@
 # Материалы для сдачи диплома DevOps
 
-Автор: Виктор Юрочкин. Проверки выполнены 28 сентября 2026 года.
+**Автор: Виктор Юрочкин**
 
-## Репозитории и конфигурации
+## Репозитории и критерии
 
-| Требование | Реализация и ссылка |
+| Требование | Материалы |
 |---|---|
-| Облачная инфраструктура Terraform | [Основной репозиторий](https://github.com/victoryurochkin/devops-diplom-yandexcloud), [bootstrap](../terraform/bootstrap), [основная конфигурация](../terraform/infrastructure) |
-| Kubernetes через Ansible | [Kubespray и параметры](../ansible), [генерация inventory](../scripts/generate-inventory.py), [запуск установки](../scripts/run-kubespray.sh) |
-| Тестовое приложение и Dockerfile | [Репозиторий приложения](https://github.com/victoryurochkin/devops-diplom-app), [Dockerfile](https://github.com/victoryurochkin/devops-diplom-app/blob/main/Dockerfile), [тесты контейнера](https://github.com/victoryurochkin/devops-diplom-app/blob/main/scripts/test-image.sh) |
-| Конфигурации Kubernetes | [Приложение](../kubernetes/app), [мониторинг](../kubernetes/monitoring), [Traefik](../kubernetes/traefik) |
-| Terraform CI/CD | [Workflow](../.github/workflows/terraform.yml): каждый push в main запускает plan и apply |
-| CI/CD приложения | [Workflow](https://github.com/victoryurochkin/devops-diplom-app/blob/main/.github/workflows/app.yml): сборка, тесты и push при коммите; дополнительный деплой при push тега |
-| Воспроизведение стенда | [Полная инструкция](REPRODUCE.md) |
+| Terraform, сервисный аккаунт, S3 backend | [Bootstrap](../terraform/bootstrap), [инфраструктура](../terraform/infrastructure) |
+| Подсети в разных зонах, три ВМ, прерываемые workers | [Сеть](../terraform/infrastructure/network.tf), [ВМ](../terraform/infrastructure/compute.tf), [параметры](../terraform/infrastructure/compute-variables.tf) |
+| Kubernetes через Ansible | [Kubespray](../ansible), [inventory](../scripts/generate-inventory.py), [установка](../scripts/run-kubespray.sh) |
+| Приложение, собственный Dockerfile, опубликованный образ | [Репозиторий приложения](https://github.com/victoryurochkin/devops-diplom-app), образ указан ниже |
+| Prometheus, Grafana, Alertmanager, node-exporter | [Настройки мониторинга](../kubernetes/monitoring), [установка](../scripts/deploy-monitoring.sh) |
+| HTTP на порту 80 | [Traefik](../kubernetes/traefik), [манифесты приложения](../kubernetes/app) |
+| Terraform pipeline при push в main | [Workflow](../.github/workflows/terraform.yml), [GitHub Actions](https://github.com/victoryurochkin/devops-diplom-yandexcloud/actions/workflows/terraform.yml) |
+| Сборка и тесты при коммите, деплой Git-тега | [Workflow приложения](https://github.com/victoryurochkin/devops-diplom-app/blob/main/.github/workflows/app.yml) |
+| Воспроизведение, destroy/apply | [Пошаговая инструкция](REPRODUCE.md) |
 
-Выбран самостоятельный Kubernetes: один control plane и два прерываемых
-worker-узла в трёх зонах доступности. Основной Terraform state хранится
-в приватном S3-бакете с версионированием. Bootstrap расположен отдельно.
+Выбран self-hosted Kubernetes: один control plane и два прерываемых worker
+в трёх зонах. Оба репозитория находятся на GitHub. Интерфейс CI/CD — GitHub Actions.
 
-Мониторинг: Prometheus, Grafana, Alertmanager, node-exporter и kube-state-metrics
-в составе kube-prometheus-stack. Traefik предоставляет HTTP-доступ на порту 80.
-В качестве варианта инфраструктурного pipeline используется GitHub Actions.
+## Доступ
 
-## Доступ к приложению и мониторингу
-
-| Сервис | Адрес |
+| Сервис | URL |
 |---|---|
-| Приложение через worker-1 | http://158.160.31.109/ |
-| Приложение через worker-2 | http://158.160.228.171/ |
+| Приложение | http://158.160.31.109/ |
+| Приложение через второй worker | http://158.160.228.171/ |
 | Grafana | http://158.160.31.109/grafana/ |
-| Проверка приложения | http://158.160.31.109/healthz |
-| Интерфейс CI/CD инфраструктуры | https://github.com/victoryurochkin/devops-diplom-yandexcloud/actions |
-| Интерфейс CI/CD приложения | https://github.com/victoryurochkin/devops-diplom-app/actions |
 
-Учётные данные Grafana передаются вместе с работой в закрытой форме сдачи.
-Пароли и ключи в публичном репозитории отсутствуют.
+Данные доступа Grafana передаются проверяющему в закрытой форме сдачи.
 
-## Образ приложения
-
-Проверенный релиз: **v1.0.1**.
+Образ релиза v1.0.1:
 
     cr.yandex/crp77uvg5d2tuusdlk1f/devops-diplom-app:v1.0.1
 
-В Kubernetes используется образ по digest:
+Digest:
 
-    cr.yandex/crp77uvg5d2tuusdlk1f/devops-diplom-app@sha256:f9640c98a09da6d87086a89b287399c73cf61229981097dc57f0bf8bb2ba24eb
+    sha256:f9640c98a09da6d87086a89b287399c73cf61229981097dc57f0bf8bb2ba24eb
 
-Registry приватный. Ссылка выше идентифицирует образ; для скачивания требуется
-авторизация. Приложение доступно по публичным HTTP-адресам без авторизации.
+Registry приватный; скачивание требует авторизации. Страница приложения публичная.
 
-## Подтверждение CI/CD
+## Подтверждения
 
-- [Terraform CI после push 659cef6](https://github.com/victoryurochkin/devops-diplom-yandexcloud/actions/runs/36431635743): plan — No changes; apply — 0 added, 0 changed, 0 destroyed.
-- [CI приложения при push в main](https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36429850386): сборка, тесты и публикация успешны; deploy пропущен для ветки.
-- [Релиз v1.0.1](https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36427694065): успешная попытка 2, публикация образа и автоматический деплой с HTTP-проверками.
+- [Terraform plan/apply при push в main](https://github.com/victoryurochkin/devops-diplom-yandexcloud/actions/runs/36435019903).
+- [Сборка, тесты и публикация приложения при push](https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36429850386).
+- [Релиз v1.0.1: публикация и автоматический деплой](https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36427694065).
+- [Мониторинг: 28/28 targets UP](checks/monitoring.txt).
+- [Deployment 2/2 и HTTP-проверки приложения](checks/application.txt).
 
-Первая попытка релиза остановилась на публикации с ответом Registry HTTP 503.
-Повторный запуск завершился успешно. Тег при повторе не изменялся.
+### Terraform CI/CD
 
-## Проверка пересоздания
+![Успешные plan и apply](screenshots/01-terraform.png)
 
-28.09.2026 удалены и повторно созданы все 10 ресурсов основной
-Terraform-конфигурации. При удалении Registry скрипт автоматически очистил
-восемь образов. Bootstrap, сервисные аккаунты и S3 backend сохранены.
-После создания повторный plan показал No changes.
+### Сборка и публикация образа
 
-Kubernetes установлен заново через Kubespray. Восстановлены данные локальных PV
-мониторинга, Secret Grafana, приложение и доступ CD-runner к новому кластеру.
-Затем CI/CD автоматически развернул v1.0.1.
+![Успешный CI приложения](screenshots/02-app-ci.png)
 
-Результаты проверок:
+### Автоматический деплой
 
-- [Мониторинг: 28/28 targets UP](monitoring-after-recreate-check.txt).
-- [Исторические метрики старых и текущие метрики новых узлов](monitoring-history-check.txt).
-- [Восстановление приложения из архива](app-after-recreate-check.txt).
-- [Проверка текущего релиза приложения](app-release-after-recreate-check.txt).
-- [Метаданные успешного CI/CD приложения](app-cicd-after-recreate-run.json).
-- [Метаданные Terraform CI после пересоздания](terraform-cicd-after-recreate-run.json).
-
-Исторические отчёты в docs могут содержать прежние IP и Registry ID.
-Текущие адреса указаны в этой странице и README.
-
-## Скриншоты
-
-### Terraform pipeline
-
-Автоматический запуск от push в main, успешный plan и apply.
-
-![Успешный Terraform pipeline](screenshots/01-terraform.png)
-
-### Сборка и публикация релиза
-
-Релиз v1.0.1, успешные jobs и ссылка на опубликованный образ с digest.
-
-![Успешный CI приложения и опубликованный образ](screenshots/02-app-ci.png)
-
-### Деплой приложения
-
-Успешны шаги Deploy published image и Check public HTTP endpoints.
-
-![Успешный деплой и HTTP-проверки](screenshots/03-app-cd.png)
+![Rollout и HTTP-проверки](screenshots/03-app-cd.png)
 
 ### Grafana
 
-Дашборд Kubernetes / Compute Resources / Node (Pods) для cp-1:
-отображаются CPU-метрики компонентов за последние 15 минут.
+![Дашборд Kubernetes с метриками узла](screenshots/04-grafana.png)
 
-![Данные Kubernetes в Grafana](screenshots/04-grafana.png)
+### Приложение
 
-### Страница приложения
-
-Публичный HTTP-доступ через worker-1, отображаются страница и имя автора.
-
-![Тестовое приложение по публичному адресу](screenshots/05-application.png)
+![Публичная страница приложения](screenshots/05-application.png)

@@ -12,6 +12,7 @@ permissions:
 concurrency:
   group: terraform-infrastructure
   cancel-in-progress: false
+  queue: max
 
 jobs:
   terraform:
@@ -45,7 +46,7 @@ jobs:
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v4
         with:
-          terraform_version: "1.9.8"
+          terraform_version: "1.13.5"
           terraform_wrapper: false
 
       - name: Install registry cleanup tools
@@ -63,7 +64,7 @@ jobs:
             scripts/cleanup-registry.py --help > /dev/null
 
       - name: Check formatting
-        run: terraform fmt -check -recursive terraform
+        run: terraform fmt -check -diff -recursive terraform
 
       - name: Prepare Terraform configuration
         env:
@@ -120,6 +121,7 @@ jobs:
           terraform -chdir=terraform/infrastructure plan \
             -input=false \
             -no-color \
+            -lock-timeout=5m \
             -detailed-exitcode \
             -var="ssh_public_key_path=$RUNNER_TEMP/diplom-ssh.pub" \
             -out="$RUNNER_TEMP/infrastructure.tfplan" \
@@ -153,6 +155,7 @@ jobs:
           terraform -chdir=terraform/infrastructure apply \
             -input=false \
             -no-color \
+            -lock-timeout=5m \
             "$RUNNER_TEMP/infrastructure.tfplan"
 
           printf 'Terraform apply completed successfully.\n' \

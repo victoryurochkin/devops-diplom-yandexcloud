@@ -1,510 +1,112 @@
-# Дипломный практикум DevOps в Yandex Cloud
+# Дипломный проект DevOps — Yandex Cloud
+
+**Виктор Юрочкин** · [Задание](https://github.com/netology-code/devops-diplom-yandexcloud)
+
+Облачная инфраструктура управляется Terraform, Kubernetes устанавливается
+Kubespray. GitHub Actions собирает и проверяет приложение, публикует образ
+в приватный Registry и развёртывает Git-теги в кластере.
+
+- [Материалы для сдачи](docs/SUBMISSION.md)
+- [Воспроизведение и эксплуатация](docs/REPRODUCE.md)
+- [Репозиторий приложения](https://github.com/victoryurochkin/devops-diplom-app)
+- [Terraform pipeline](https://github.com/victoryurochkin/devops-diplom-yandexcloud/actions/workflows/terraform.yml)
+- [CI/CD приложения](https://github.com/victoryurochkin/devops-diplom-app/actions/workflows/app.yml)
+
+## Доступ
+
+| Сервис | Адрес |
+|---|---|
+| Приложение | http://158.160.31.109/ |
+| Приложение через второй worker | http://158.160.228.171/ |
+| Grafana | http://158.160.31.109/grafana/ |
+| Grafana через второй worker | http://158.160.228.171/grafana/ |
+
+Данные доступа Grafana передаются проверяющему отдельно. Ключей и паролей
+в репозитории нет. Registry приватный; скачивание образов требует авторизации.
+
+## Соответствие заданию
+
+| Критерий | Реализация |
+|---|---|
+| Инфраструктура Terraform и удалённый state | [Bootstrap](terraform/bootstrap): сервисные аккаунты и закрытый версионируемый S3-бакет. [Основная конфигурация](terraform/infrastructure): сеть, три подсети, ВМ, адреса, группы безопасности и Registry |
+| Три ВМ и Kubernetes через Ansible | [Kubespray](ansible), [генерация inventory](scripts/generate-inventory.py), [установка](scripts/run-kubespray.sh). Workers прерываемые |
+| Тестовое приложение и Dockerfile | [Отдельный репозиторий](https://github.com/victoryurochkin/devops-diplom-app): nginx, статическая страница, тесты образа |
+| Мониторинг Kubernetes | [kube-prometheus-stack](kubernetes/monitoring): Prometheus, Grafana, Alertmanager, node-exporter и kube-state-metrics |
+| HTTP на порту 80 | [Traefik](kubernetes/traefik) на обоих workers; [Ingress приложения](kubernetes/app/ingress.yaml) и Grafana |
+| Terraform CI/CD | [Workflow](.github/workflows/terraform.yml): каждый push в main запускает plan и применение сохранённого плана |
+| CI приложения | Каждый push в ветку: сборка, тестирование и публикация образа с тегом sha-коммита |
+| CD приложения | Push Git-тега: сборка и публикация соответствующего тега, деплой по digest, rollout и HTTP-проверки |
+| Демонстрация и подтверждения | [Скриншоты и результаты](docs/SUBMISSION.md); инструкция создания и удаления в [REPRODUCE.md](docs/REPRODUCE.md) |
+
+## Архитектура
+
+| Узел | Зона | Внутренний IP | Публичный IP | Назначение |
+|---|---|---|---|---|
+| cp-1 | ru-central1-a | 10.200.10.33 | 51.250.67.37 | Control plane и etcd |
+| worker-1 | ru-central1-b | 10.200.20.12 | 158.160.31.109 | Приложение, Traefik, Grafana, Alertmanager |
+| worker-2 | ru-central1-d | 10.200.30.3 | 158.160.228.171 | Приложение, Traefik, Prometheus |
+
+ВМ: standard-v3, 2 vCPU, 4 ГБ RAM, гарантированная доля CPU 20%, SSD 30 ГБ.
+SSH и Kubernetes API доступны только с admin_cidrs. Порт 80 workers открыт
+для проверки. Метрики компонентов собираются по внутренней сети.
+
+Сеть подов — Calico VXLAN, 10.233.64.0/18; сервисы — 10.233.0.0/18.
+Приложение содержит две реплики на разных workers. Контейнер nginx работает
+без root, слушает 8080; Service направляет на него запросы с порта 80.
+Readiness и liveness используют /healthz.
+
+## Версии
+
+| Компонент | Версия / источник |
+|---|---|
+| Terraform | [1.13.5](.terraform-version) |
+| Yandex provider | 0.230.0, закреплён в versions.tf и lock-файлах |
+| Kubespray | [v2.32.0, образ по digest](ansible/kubespray-image.txt) |
+| Kubernetes / containerd | 1.36.4 / 2.3.5 |
+| Traefik Helm chart | [41.6.0](kubernetes/traefik/chart-version.txt) |
+| kube-prometheus-stack | [91.8.0](kubernetes/monitoring/chart-version.txt) |
+| nginx | Digest в Dockerfile приложения |
+
+## Управление и воспроизведение
+
+Terraform bootstrap хранит state локально; основной state — в S3 с native
+lockfile. Все операторы и CI используют одну закреплённую версию Terraform.
+CI-запуски выполняются последовательно с очередью. Bootstrap выполняется
+отдельно, рабочему Terraform-аккаунту назначены сервисные роли без editor/admin
+на весь каталог.
+
+Публичные адреса описаны отдельными ресурсами Terraform и сохраняются при
+остановке ВМ. Для существующего стенда используется импорт текущих адресов,
+описанный в [инструкции эксплуатации](docs/REPRODUCE.md#перевод-существующего-стенда-на-новые-настройки).
+
+На управляющем хосте it устанавливается diplom-maintenance.timer: проверяет workers
+каждые две минуты и запускает остановленные ВМ; обновляет ограниченный токен CD.
+Запрашиваемый срок токена — два часа. Kubeconfig runner заменяется атомарно,
+административный kubeconfig runner не получает. Хост it должен оставаться включённым.
+
+После создания инфраструктуры скрипт sync-app-ci-vars.py обновляет GitHub Variables
+и локальные данные обслуживания. Мониторинг получает адреса из Terraform outputs.
+restore-app.sh принимает digest образа в текущем Registry и восстанавливает приложение
+и доступ CD. Последовательность всех шагов находится в [REPRODUCE.md](docs/REPRODUCE.md).
+
+## Проверки
+
+[Configuration checks](.github/workflows/checks.yml) выполняет проверку синтаксиса,
+тесты безопасного выбора workers и выпуска токенов, Terraform fmt и validate.
+Рабочий Terraform workflow выполняет plan/apply только для основной конфигурации.
+
+Проверенный релиз приложения: v1.0.1.
+
+    cr.yandex/crp77uvg5d2tuusdlk1f/devops-diplom-app:v1.0.1
+
+В Deployment используется digest, зафиксированный в [манифесте](kubernetes/app/deployment.yaml).
+Манифест задаёт версию для первоначального развёртывания; текущий релиз после CD
+проверяется через kubectl. Для восстановления выбирается digest явно.
 
-Автор: Виктор Юрочкин.
+## Границы учебного стенда
 
-Задание: https://github.com/netology-code/devops-diplom-yandexcloud
-
-## Текущий статус
-
-- [x] Создан отдельный каталог Yandex Cloud.
-- [x] Через Terraform созданы сервисный аккаунт и закрытый S3-бакет.
-- [x] Включено версионирование бакета.
-- [x] Основной Terraform state хранится в S3.
-- [x] От сервисного аккаунта созданы VPC и три подсети.
-- [x] Повторный terraform plan подтверждает отсутствие изменений.
-- [x] Проверено удаление и повторное создание основной инфраструктуры.
-- [x] Созданы виртуальные машины и группы безопасности.
-- [x] Установлен Kubernetes.
-- [x] Установлен Traefik, проверен входящий HTTP-трафик.
-- [x] Развёрнут мониторинг, Grafana доступна по HTTP, 28/28 targets UP.
-- [x] Созданы репозиторий приложения, Dockerfile и образ в registry.
-- [x] Тестовое приложение развёрнуто и доступно по HTTP.
-- [x] Настроен Terraform pipeline для каждого коммита в main.
-- [x] Настроены сборка и push образа приложения при каждом коммите.
-- [x] Настроен деплой версии приложения при создании Git-тега.
-- [x] Подготовлена полная инструкция воспроизведения стенда.
-- [x] Подготовлены ссылки и материалы для сдачи.
-
-Инструкция воспроизведения: [docs/REPRODUCE.md](docs/REPRODUCE.md).
-
-Материалы для сдачи: [docs/SUBMISSION.md](docs/SUBMISSION.md).
-
-## Структура
-
-- terraform/bootstrap — сервисный аккаунт, IAM-роли, S3-ключ и бакет.
-- terraform/infrastructure — VPC, подсети, виртуальные машины и группы безопасности.
-- ansible — версия Kubespray, inventory и параметры Kubernetes.
-- kubernetes — манифесты и настройки Helm для Traefik и мониторинга.
-- scripts — генерация inventory, запуск Kubespray и настройка метрик kube-proxy.
-- docs — материалы для сдачи.
-
-## Terraform
-
-Использован Terraform 1.9.8 и провайдер yandex-cloud/yandex 0.230.0.
-
-Bootstrap использует локальный state. Его резервная копия хранится
-локально в .secrets/bootstrap-backups и не включается в Git.
-
-Основной state хранится в Object Storage:
-infrastructure/terraform.tfstate.
-
-Первичное создание bootstrap выполняется с пользовательским IAM-токеном.
-Основная инфраструктура управляется сервисным аккаунтом.
-Авторизованный ключ сервисного аккаунта создан отдельно через yc CLI.
-
-Файлы terraform.tfvars создаются на основе terraform.tfvars.example.
-Секреты, state и сохранённые планы исключены из Git.
-Файлы .terraform.lock.hcl включены в репозиторий.
-
-Блокировка удалённого state пока не настроена.
-CI-запуски сериализуются через GitHub Actions concurrency.
-Ручные запуски основной конфигурации выполняются только при отсутствии
-активных CI-запусков. Блокировки между CI и локальным Terraform нет.
-
-## Сеть
-
-| Подсеть | Зона | CIDR |
-|---|---|---|
-| diplom-a | ru-central1-a | 10.200.10.0/24 |
-| diplom-b | ru-central1-b | 10.200.20.0/24 |
-| diplom-d | ru-central1-d | 10.200.30.0/24 |
-
-## Проверенный результат
-
-Через Terraform созданы VPC, три подсети, три ВМ и группы безопасности.
-После создания ВМ повторный terraform plan показал No changes.
-Kubernetes: три узла Ready.
-Traefik принимает HTTP-трафик на обоих workers.
-Grafana отображает метрики, все 28 настроенных targets Prometheus UP.
-Тестовое приложение развёрнуто. CI/CD приложения проверен на релизе v1.0.1 после пересоздания кластера. Terraform pipeline настроен: push в main запускает plan и apply.
-
-## Установка Kubernetes
-
-Использован Kubespray v2.32.0. Digest контейнера сохранён
-в ansible/kubespray-image.txt.
-
-Версии: Kubernetes 1.36.4, containerd 2.3.5.
-
-scripts/generate-inventory.py принимает JSON из команды
-terraform output -json nodes и создаёт inventory.
-Ansible подключается по публичным IP, кластер использует внутренние IP.
-
-Установка: ./scripts/run-kubespray.sh.
-Перед запуском необходимо сформировать inventory и проверить SSH-ключи узлов.
-
-Для параметров ВМ скопировать
-terraform/infrastructure/compute.auto.tfvars.json.example
-в compute.auto.tfvars.json в том же каталоге и указать свой admin_cidrs.
-ID образа зафиксирован; при воспроизведении проверить его доступность.
-
-Один control plane с etcd и два прерываемых worker.
-Сеть подов: Calico VXLAN.
-Кластер не обеспечивает отказоустойчивость control plane.
-
-Проверка: docs/kubernetes-check.txt.
-Все три узла Ready, системные поды Running.
-
-## Входящий HTTP-трафик
-
-Traefik установлен Helm chart 41.6.0, версия приложения 3.7.13.
-Настройки находятся в kubernetes/traefik.
-
-Контроллер работает как DaemonSet на двух worker-узлах.
-HTTP поступает на порт 80 публичного IP каждого worker через hostPort.
-Service имеет тип ClusterIP. Облачный балансировщик не используется.
-
-IngressClass: traefik.
-Маршрут /grafana/ обслуживает Grafana.
-Корневой путь / обслуживает тестовое приложение.
-docs/traefik-check.txt — первоначальная проверка контроллера
-до создания маршрута Grafana.
-
-## Мониторинг
-
-Установлен kube-prometheus-stack, Helm chart 91.8.0.
-Grafana: версия приложения 13.2.2, версия зависимого chart 13.2.6.
-
-Компоненты: Prometheus Operator, Prometheus, Grafana,
-Alertmanager и kube-state-metrics.
-Node-exporter работает на каждом из трёх узлов.
-
-Конфигурация: kubernetes/monitoring.
-Grafana: http://158.160.31.109/grafana/
-Учётные данные хранятся отдельно от Git.
-
-Prometheus хранит метрики до 2 дней с ограничением retentionSize 5GiB.
-Используются локальные PV:
-- Prometheus: worker-2, 10Gi.
-- Grafana: worker-1, 1Gi.
-- Alertmanager: worker-1, 1Gi.
-
-Размеры PV не являются дисковыми квотами.
-При недоступности узла использующий его локальный PV компонент
-не сможет перенести данные на другой узел.
-Удаление ВМ вместе с диском уничтожает эти данные.
-
-Проверено: 28 из 28 настроенных targets UP, три узла Ready,
-метрики CPU и памяти доступны, dashboards Grafana отображают данные.
-Все три PVC находятся в состоянии Bound.
-
-Подключены метрики etcd, scheduler, controller-manager и kube-proxy.
-Сбор выполняется по внутренним адресам кластера.
-Внешние уведомления Alertmanager не настроены.
-
-Результаты проверки:
-- docs/monitoring-check.txt
-- docs/monitoring-metrics-check.txt
-- docs/monitoring-targets-check.txt
-
-### Настройки метрик компонентов Kubernetes
-
-Параметры Kubespray сохранены в
-ansible/inventory/diplom/group_vars/all/monitoring.yml.
-
-etcd публикует метрики на внутреннем адресе и localhost, порт 2381.
-Клиентский API etcd на порту 2379 использует TLS.
-
-kube-proxy публикует метрики на порту 10249.
-Доступ к портам метрик извне ограничен группами безопасности Terraform.
-
-Для уже установленного кластера изменение параметра Kubespray
-не обновило действующий ConfigMap kube-proxy. Настройка применена:
-1. python3 scripts/configure-kube-proxy-metrics.py
-2. kubectl -n kube-system rollout restart daemonset/kube-proxy
-3. kubectl -n kube-system rollout status daemonset/kube-proxy
-
-Скрипт сохраняет резервную копию ConfigMap в .secrets/kube-proxy-backups
-и меняет только metricsBindAddress.
-
-Для HTTPS endpoints scheduler и controller-manager используется
-токен Prometheus; проверка серверных сертификатов отключена
-в соответствующих ServiceMonitor.
-
-## Container Registry
-
-Через Terraform создан приватный Yandex Container Registry.
-Конфигурация: terraform/infrastructure/registry.tf.
-
-Registry ID: crp77uvg5d2tuusdlk1f.
-Репозиторий образов:
-cr.yandex/crp77uvg5d2tuusdlk1f/devops-diplom-app.
-
-После создания повторный terraform plan показал No changes.
-Образ приложения опубликован и развёрнут в Kubernetes.
-
-## Тестовое приложение
-
-Репозиторий: https://github.com/victoryurochkin/devops-diplom-app
-
-Статическая HTML-страница с собственными Dockerfile и nginx.conf.
-Контейнер работает от пользователя nginx и слушает порт 8080.
-Локальные тесты проверяют конфигурацию nginx, страницу и /healthz.
-
-Текущий проверенный образ:
-cr.yandex/crp77uvg5d2tuusdlk1f/devops-diplom-app:v1.0.1
-
-Деплой закреплён по digest:
-sha256:f9640c98a09da6d87086a89b287399c73cf61229981097dc57f0bf8bb2ba24eb
-
-Манифесты: kubernetes/app.
-Namespace: diplom-app.
-Deployment содержит две реплики на разных worker-узлах.
-Service ClusterIP направляет трафик с порта 80 на порт контейнера 8080.
-Ingress класса traefik обслуживает путь /.
-Путь /grafana/ продолжает обслуживаться мониторингом.
-
-Адреса приложения:
-- http://158.160.31.109/
-- http://158.160.228.171/
-
-Для скачивания образов Terraform bootstrap создаёт отдельный сервисный
-аккаунт с ролью container-registry.images.puller на каталог диплома.
-Авторизованный ключ создаётся отдельно через yc CLI и хранится локально
-в .secrets/registry-puller-key.json.
-
-После создания namespace команда
-python3 scripts/create-registry-pull-secret.py
-создаёт или обновляет Secret diplom-app/yc-registry.
-Ключ и содержимое Secret не включаются в Git.
-
-Восстановление приложения: scripts/restore-app.sh с digest опубликованного образа в качестве аргумента.
-Проверка: docs/app-check.txt.
-
-Первоначальная сборка, публикация и установка выполнены вручную.
-Последующие сборка, тестирование, публикация и деплой автоматизированы через GitHub Actions.
-
-## CI/CD приложения
-
-Workflow: .github/workflows/app.yml в репозитории devops-diplom-app.
-
-При push в любую ветку GitHub Actions собирает образ, проверяет
-конфигурацию nginx, HTTP-страницу и /healthz, затем публикует образ
-с тегом sha-<12 символов коммита>. При ошибке тестов публикация не выполняется.
-
-При push Git-тега создаётся образ с соответствующим Docker-тегом
-и OCI label org.opencontainers.image.version.
-После успешной сборки и тестов запускается деплой по digest,
-ожидание rollout и HTTP-проверки через оба worker.
-
-Сборка выполняется на GitHub-hosted runner ubuntu-24.04.
-Деплой выполняется на VM it через self-hosted runner
-diplom-app-deploy-it с меткой diplom-deploy.
-Runner работает как systemd-служба от пользователя diplom-runner,
-без членства в группах sudo и docker.
-
-Для публикации используется Actions Secret YC_REGISTRY_PUSHER_KEY.
-Kubeconfig деплоя находится локально на runner:
- /home/diplom-runner/.kube/config
-Он использует ServiceAccount diplom-app/app-deployer.
-RBAC разрешает изменение Deployment diplom-app и чтение подов
-в namespace diplom-app.
-
-Проверенный релиз в пересозданном кластере: v1.0.1.
-Образ: cr.yandex/crp77uvg5d2tuusdlk1f/devops-diplom-app:v1.0.1
-Digest: sha256:f9640c98a09da6d87086a89b287399c73cf61229981097dc57f0bf8bb2ba24eb
-
-Успешный запуск (попытка 2):
-https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36427694065
-
-Первая попытка остановилась при публикации с ответом Registry HTTP 503.
-Повторный запуск завершил сборку, тесты, публикацию и деплой.
-
-После деплоя: Deployment 2/2, обе реплики Running,
-HTTP-проверки приложения прошли.
-
-Конфигурации доступа:
-- terraform/bootstrap/registry-pusher.tf
-- kubernetes/app/deployer-rbac.yaml
-- kubernetes/app/deployer-token.yaml
-- scripts/generate-deployer-kubeconfig.py
-
-deployer-token.yaml содержит только описание Secret.
-Сам токен создаётся Kubernetes и не включается в Git.
-Токен долгоживущий; автоматическая ротация не настроена.
-
-deployment.yaml закрепляет проверенный релиз v1.0.1 для воспроизведения.
-Последующие релизы обновляют образ через CD.
-Повторное применение этого манифеста вернёт закреплённую в нём версию.
-
-Результаты проверки:
-- docs/app-cicd-run.json
-- docs/app-release-check.txt
-- docs/github-runner-version.txt
-
-## CI/CD инфраструктуры
-
-Workflow: .github/workflows/terraform.yml.
-
-Каждый push в main, включая изменения документации, запускает:
-1. Проверку форматирования Terraform.
-2. Инициализацию S3 backend и провайдера.
-3. Проверку конфигурации.
-4. Создание плана.
-5. Автоматическое применение сохранённого плана.
-
-Фильтров по путям файлов нет.
-Также доступен ручной запуск workflow; apply разрешён только в main.
-При ошибке планирования применение не выполняется.
-
-Runner: GitHub-hosted ubuntu-24.04.
-Terraform: 1.9.8.
-Провайдер: yandex-cloud/yandex 0.230.0, загружается через зеркало Yandex.
-Применяется terraform/infrastructure.
-Bootstrap выполняется отдельно с пользовательскими правами.
-
-GitHub Actions Secrets инфраструктурного репозитория:
-- YC_TERRAFORM_KEY
-- TF_STATE_ACCESS_KEY_ID
-- TF_STATE_SECRET_ACCESS_KEY
-- TF_VARS
-- TF_COMPUTE_VARS
-- TF_SSH_PUBLIC_KEY
-
-При изменении локальных tfvars нужно обновить соответствующие Secrets.
-TF_SSH_PUBLIC_KEY содержит только публичный SSH-ключ.
-
-Проверенный запуск:
-https://github.com/victoryurochkin/devops-diplom-yandexcloud/actions/runs/36408675311
-
-Результат: plan — No changes;
-apply — 0 added, 0 changed, 0 destroyed.
-Это подтверждает запуск apply из CI.
-Удаление и пересоздание инфраструктуры этим запуском не проверялись.
-
-Материалы:
-- docs/terraform-cicd-run.json
-- docs/terraform-cicd-check.txt
-
-### Адреса мониторинга из Terraform
-
-scripts/generate-monitoring-values.py получает JSON из
-terraform output -json nodes и создаёт
-.secrets/monitoring-runtime.json.
-
-Генерируются:
-- Внутренний адрес control plane для etcd, controller-manager и scheduler.
-- Публичный URL Grafana на основе адреса worker-1.
-
-Сгенерированный файл исключён из Git.
-
-Установка или обновление Helm-релиза:
-
-    ./scripts/deploy-monitoring.sh
-
-Скрипт получает доступ к S3 state через outputs локального bootstrap,
-повторно генерирует адреса, проверяет рендеринг и запускает Helm.
-Файл monitoring-runtime.json передаётся после основных values.
-
-Перед запуском необходимы:
-- Работающий Kubernetes и доступ через KUBECONFIG или ~/.kube/config.
-- SSH-доступ ubuntu к worker-узлам с sudo без пароля.
-- Проверенные SSH-ключи узлов в known_hosts.
-- Доступ к локальному bootstrap state для получения S3-ключей.
-- Существующий Secret grafana-admin либо его локальная резервная копия.
-
-deploy-monitoring.sh автоматически вызывает scripts/prepare-monitoring.py.
-Подготавливаются namespace monitoring, каталоги локального хранения,
-StorageClass monitoring-local и три PV.
-
-Существующий Secret Grafana сохраняется в
-.secrets/grafana-admin-secret.json с правами 0600.
-На новом кластере Secret восстанавливается из этого файла.
-При несовпадении локальной копии и существующего Secret скрипт
-останавливается, сохраняя оба варианта.
-
-SSH-ключ и known_hosts можно задать переменными
-DIPLOM_SSH_KEY и DIPLOM_KNOWN_HOSTS.
-
-Повторная подготовка проверена на работающем кластере:
-StorageClass и PV unchanged, все три PVC Bound.
-Резервная копия Secret содержит только учётные данные;
-данные локальных PV в неё не входят.
-
-На первоначальном кластере 28.09.2026 релиз monitoring обновлён до revision 4,
-все поды мониторинга готовы, три PVC Bound.
-Адреса в сохранённых Helm values совпадают с Terraform outputs.
-
-После пересоздания кластера восстановлены данные локальных PV и Secret Grafana.
-Все 28 targets UP. Проверены исторические метрики старых узлов
-за 28.09.2026 14:00 МСК и текущие метрики трёх новых узлов.
-Отчёты: docs/monitoring-after-recreate-check.txt и docs/monitoring-history-check.txt.
-
-## Восстановление приложения и доступа CD
-
-Скрипт: scripts/restore-app.sh.
-Единственный аргумент — digest опубликованного образа
-в формате sha256: и 64 шестнадцатеричных символа.
-
-Адрес репозитория образов берётся из Terraform output
-app_image_repository. Исходный deployment.yaml используется
-как шаблон; нужный образ подставляется перед применением.
-
-Скрипт:
-- Создаёт namespace и настраивает Secret доступа к Registry.
-- Применяет Deployment, Service и Ingress.
-- Ожидает завершения rollout и проверяет установленный образ.
-- Применяет ServiceAccount, Role, RoleBinding и Secret токена CD.
-- Генерирует kubeconfig app-deployer для текущего кластера.
-- Устанавливает его пользователю diplom-runner с правами 0600.
-- Сохраняет предыдущий kubeconfig runner в файл config.bak-*.
-- Проверяет доступ runner к Deployment.
-
-Запуск выполняется на управляющем хосте с установленным runner.
-Нужны административный kubeconfig, локальный bootstrap state,
-ключ registry-puller и sudo для установки kubeconfig runner.
-
-После пересоздания инфраструктуры:
-1. Установить Kubernetes и обновить административный kubeconfig.
-2. Синхронизировать CI Variables через scripts/sync-app-ci-vars.py.
-3. Собрать и опубликовать образ в актуальном Registry.
-4. Запустить scripts/restore-app.sh с digest этого образа.
-
-Проверено на существующем кластере:
-Deployment 2/2, digest сохранён, доступ CD-runner работает.
-Отчёт: docs/app-restore-check.txt.
-
-Повторный запуск скрипта проверен до удаления инфраструктуры.
-После destroy приложение восстановлено из архива в новый Registry и кластер.
-Затем GitHub Actions автоматически развернул релиз v1.0.1.
-Отчёты: docs/app-after-recreate-check.txt и docs/app-cicd-after-recreate-run.json.
-
-## Очистка Container Registry при удалении инфраструктуры
-
-В terraform/infrastructure/registry.tf настроен local-exec с when = destroy.
-Перед удалением реестра Terraform запускает scripts/cleanup-registry.py,
-который удаляет все находящиеся в нём образы, включая релизные.
-Очистка также запускается при замене ресурса Registry.
-
-Скрипт проверяет каталог, имя и метки реестра, обрабатывает страницы
-списка образов и ожидает завершения операций удаления.
-Без флага --delete выполняется только просмотр.
-
-Авторизация: ключ из YC_SERVICE_ACCOUNT_KEY_FILE.
-Используется существующий сервисный аккаунт Terraform.
-Зависимость SDK закреплена в scripts/registry-tools-requirements.txt.
-
-Подготовка Python-окружения из корня репозитория:
-
-    python3 -m venv .secrets/registry-tools
-    .secrets/registry-tools/bin/python -m pip install -r scripts/registry-tools-requirements.txt
-
-GitHub Actions устанавливает зависимость автоматически.
-Основная конфигурация запускается через
-terraform -chdir=terraform/infrastructure.
-
-При terraform plan и apply без удаления Registry очистка не запускается.
-Для штатного destroy блок ресурса вместе с provisioner должен
-оставаться в конфигурации до завершения удаления.
-
-Перед пересозданием инфраструктуры нужно остановить публикацию образов
-и исключить одновременные локальные и CI-запуски Terraform.
-Удаление образов необратимо. При ошибке очистки удаление Registry
-останавливается; другие ресурсы к этому моменту могут быть уже удалены.
-
-28.09.2026 проверено реальное удаление: скрипт очистил восемь образов,
-после чего Terraform удалил Registry. Основная конфигурация удалила
-10 ресурсов и повторно создала 10 ресурсов; итоговый plan — No changes.
-Ресурсы bootstrap и бакет со state сохранены.
-
-## Проверка пересоздания 28.09.2026
-
-Выполнен полный цикл удаления и создания основной Terraform-конфигурации:
-10 ресурсов удалены, затем 10 созданы. Bootstrap и S3 backend сохранены.
-Kubernetes установлен заново через Kubespray, все три узла Ready.
-
-| Узел | Внутренний IP | Публичный IP |
-|---|---|---|
-| cp-1 | 10.200.10.33 | 51.250.67.37 |
-| worker-1 | 10.200.20.12 | 158.160.31.109 |
-| worker-2 | 10.200.30.3 | 158.160.228.171 |
-
-После установки восстановлены Traefik, мониторинг и приложение.
-Данные мониторинга перенесены из резервных архивов локальных PV.
-Подтверждены история старого кластера и сбор метрик новых узлов.
-
-Образ v1.0.0 восстановлен из Docker-архива через Skopeo.
-Digest конфигурации совпал с конфигурацией внутри архива.
-Digest опубликованного манифеста изменился при перепубликации.
-После восстановления CI/CD автоматически развернул новый релиз v1.0.1.
-
-Параметры IMAGE_REPOSITORY и APP_WORKER_IPS синхронизированы из Terraform.
-Kubeconfig CD-runner обновлён для нового кластера. Оба workflow включены.
-
-Terraform CI после пересоздания:
-https://github.com/victoryurochkin/devops-diplom-yandexcloud/actions/runs/36428567431
-
-Результат: plan — No changes; apply — 0 added, 0 changed, 0 destroyed.
-Этот запуск выполнен вручную через workflow_dispatch на main;
-автоматический запуск при push в main также включён.
-
-Материалы после пересоздания:
-
-- docs/monitoring-after-recreate-check.txt
-- docs/monitoring-history-check.txt
-- docs/app-after-recreate-check.txt
-- docs/app-release-after-recreate-check.txt
-- docs/app-cicd-after-recreate-run.json
-- docs/terraform-cicd-after-recreate-run.json
-
-Первоначальные отчёты сохранены как история и могут содержать старые адреса.
-Полные архивы, state, ключи и резервные копии хранятся вне Git.
+Один control plane; workers прерываемые. Их повторный запуск зависит от наличия
+ресурсов Yandex Cloud. Локальные PV привязаны к узлам: Prometheus 10 ГиБ,
+Grafana и Alertmanager по 1 ГиБ. Prometheus хранит метрики до двух дней / 5 GiB.
+Архивы PV нужны для сохранения данных при удалении ВМ. Внешняя доставка уведомлений
+Alertmanager не входит в выбранную конфигурацию.

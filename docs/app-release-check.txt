@@ -1,8 +1,0 @@
-2026-09-28T12:52:04+03:00
-NAME                         READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                                                                                                                     SELECTOR
-deployment.apps/diplom-app   2/2     2            2           45m   nginx        cr.yandex/crp15t94ei4mots103d9/devops-diplom-app@sha256:e7f328f227f530e7604c6afe04f148bff7543563dd982b61fbd4ad7ca8df4315   app=diplom-app
-
-NAME                              READY   STATUS    RESTARTS   AGE   IP               NODE       NOMINATED NODE   READINESS GATES
-pod/diplom-app-848974f9fb-7vtg7   1/1     Running   0          10m   10.233.72.200    worker-2   <none>           <none>
-pod/diplom-app-848974f9fb-sl5cv   1/1     Running   0          10m   10.233.105.205   worker-1   <none>           <none>
-cr.yandex/crp15t94ei4mots103d9/devops-diplom-app@sha256:e7f328f227f530e7604c6afe04f148bff7543563dd982b61fbd4ad7ca8df4315

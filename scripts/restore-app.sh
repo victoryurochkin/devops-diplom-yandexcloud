@@ -82,44 +82,9 @@ CURRENT_IMAGE="$(kubectl --request-timeout=30s \
 
 [[ "$CURRENT_IMAGE" == "$APP_IMAGE" ]]
 
-# Создание доступа для CD в текущем кластере.
-kubectl --request-timeout=30s apply \
-  -f kubernetes/app/deployer-rbac.yaml \
-  -f kubernetes/app/deployer-token.yaml
-
-python3 scripts/generate-deployer-kubeconfig.py
-
-# Проверяем новый kubeconfig до установки пользователю runner.
-kubectl --kubeconfig="$PROJECT_DIR/.secrets/app-deployer.kubeconfig" \
-  --request-timeout=30s -n diplom-app \
-  get deployment diplom-app
-
-RUNNER_CONFIG="/home/diplom-runner/.kube/config"
-
-sudo install -d \
-  -o diplom-runner -g diplom-runner -m 0700 \
-  /home/diplom-runner/.kube
-
-if sudo test -f "$RUNNER_CONFIG"; then
-  sudo cp -p "$RUNNER_CONFIG" \
-    "${RUNNER_CONFIG}.bak-$(date +%Y%m%d-%H%M%S)"
-fi
-
-sudo install \
-  -o diplom-runner -g diplom-runner -m 0600 \
-  .secrets/app-deployer.kubeconfig \
-  "$RUNNER_CONFIG"
-
-printf '\nПраво runner обновлять приложение — ожидаем yes:\n'
-sudo -u diplom-runner -H /usr/local/bin/kubectl \
-  --kubeconfig="$RUNNER_CONFIG" \
-  --request-timeout=30s -n diplom-app \
-  auth can-i patch deployment/diplom-app
-
-sudo -u diplom-runner -H /usr/local/bin/kubectl \
-  --kubeconfig="$RUNNER_CONFIG" \
-  --request-timeout=60s -n diplom-app \
-  rollout status deployment/diplom-app --timeout=30s
+# Создание ограниченного доступа CD и установка краткоживущего токена.
+kubectl --request-timeout=30s apply -f kubernetes/app/deployer-rbac.yaml
+bash scripts/refresh-deployer-access.sh
 
 kubectl --request-timeout=30s -n diplom-app \
   get deployment,pods,service,ingress -o wide
