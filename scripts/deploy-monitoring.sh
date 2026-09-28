@@ -7,14 +7,7 @@ cd "$PROJECT_DIR"
 
 export KUBECONFIG="${KUBECONFIG:-$HOME/.kube/config}"
 
-# Эти ресурсы подготавливаются до установки Helm-релиза.
-kubectl --request-timeout=30s -n monitoring \
-  get secret grafana-admin >/dev/null
-
-kubectl --request-timeout=30s get pv \
-  monitoring-prometheus \
-  monitoring-grafana \
-  monitoring-alertmanager >/dev/null
+# Namespace, Secret и PV подготавливаются через prepare-monitoring.py.
 
 # Terraform output читает существующий S3 state.
 unset AWS_SESSION_TOKEN AWS_SECURITY_TOKEN AWS_PROFILE
@@ -30,10 +23,17 @@ test -n "$AWS_SECRET_ACCESS_KEY"
 export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
 export AWS_EC2_METADATA_DISABLED=true
 
-terraform -chdir=terraform/infrastructure output -json nodes |
-  python3 scripts/generate-monitoring-values.py
+MONITORING_NODES="$(terraform -chdir=terraform/infrastructure output -json nodes)"
 
 unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+
+printf '%s\n' "$MONITORING_NODES" |
+  python3 scripts/generate-monitoring-values.py
+
+printf '%s\n' "$MONITORING_NODES" |
+  python3 scripts/prepare-monitoring.py
+
+unset MONITORING_NODES
 
 CHART_VERSION="$(cat kubernetes/monitoring/chart-version.txt)"
 test -n "$CHART_VERSION"

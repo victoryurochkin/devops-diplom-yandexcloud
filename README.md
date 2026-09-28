@@ -349,11 +349,30 @@ terraform output -json nodes и создаёт
 повторно генерирует адреса, проверяет рендеринг и запускает Helm.
 Файл monitoring-runtime.json передаётся после основных values.
 
-Перед запуском должны быть подготовлены:
-- Доступ к кластеру через KUBECONFIG или ~/.kube/config.
-- Namespace monitoring и Secret grafana-admin.
-- Каталоги локального хранения на worker-узлах.
-- PV monitoring-prometheus, monitoring-grafana и monitoring-alertmanager.
+Перед запуском необходимы:
+- Работающий Kubernetes и доступ через KUBECONFIG или ~/.kube/config.
+- SSH-доступ ubuntu к worker-узлам с sudo без пароля.
+- Проверенные SSH-ключи узлов в known_hosts.
+- Доступ к локальному bootstrap state для получения S3-ключей.
+- Существующий Secret grafana-admin либо его локальная резервная копия.
+
+deploy-monitoring.sh автоматически вызывает scripts/prepare-monitoring.py.
+Подготавливаются namespace monitoring, каталоги локального хранения,
+StorageClass monitoring-local и три PV.
+
+Существующий Secret Grafana сохраняется в
+.secrets/grafana-admin-secret.json с правами 0600.
+На новом кластере Secret восстанавливается из этого файла.
+При несовпадении локальной копии и существующего Secret скрипт
+останавливается, сохраняя оба варианта.
+
+SSH-ключ и known_hosts можно задать переменными
+DIPLOM_SSH_KEY и DIPLOM_KNOWN_HOSTS.
+
+Повторная подготовка проверена на работающем кластере:
+StorageClass и PV unchanged, все три PVC Bound.
+Резервная копия Secret содержит только учётные данные;
+данные локальных PV в неё не входят.
 
 Проверено 28.09.2026: релиз monitoring обновлён до revision 4,
 все поды мониторинга готовы, три PVC Bound.
