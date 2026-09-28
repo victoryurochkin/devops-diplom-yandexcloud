@@ -13,8 +13,8 @@
 - [x] От сервисного аккаунта созданы VPC и три подсети.
 - [x] Повторный terraform plan подтверждает отсутствие изменений.
 - [ ] Проверено удаление и повторное создание основной инфраструктуры.
-- [ ] Созданы виртуальные машины и группы безопасности.
-- [ ] Установлен Kubernetes.
+- [x] Созданы виртуальные машины и группы безопасности.
+- [x] Установлен Kubernetes.
 - [ ] Развёрнуты приложение и мониторинг.
 - [ ] Настроены CI/CD инфраструктуры и приложения.
 - [ ] Подготовлены ссылки и материалы для сдачи.
@@ -61,3 +61,29 @@ infrastructure/terraform.tfstate.
 Созданы одна VPC и три подсети.
 Ресурсы доступны через terraform state list.
 Повторный terraform plan: No changes.
+
+## Установка Kubernetes
+
+Использован Kubespray v2.32.0. Digest контейнера сохранён
+в ansible/kubespray-image.txt.
+
+Версии: Kubernetes 1.36.4, containerd 2.3.5.
+
+scripts/generate-inventory.py принимает JSON из команды
+terraform output -json nodes и создаёт inventory.
+Ansible подключается по публичным IP, кластер использует внутренние IP.
+
+Установка: ./scripts/run-kubespray.sh.
+Перед запуском необходимо сформировать inventory и проверить SSH-ключи узлов.
+
+Для параметров ВМ скопировать
+terraform/infrastructure/compute.auto.tfvars.json.example
+в compute.auto.tfvars.json в том же каталоге и указать свой admin_cidrs.
+ID образа зафиксирован; при воспроизведении проверить его доступность.
+
+Один control plane с etcd и два прерываемых worker.
+Сеть подов: Calico VXLAN.
+Кластер не обеспечивает отказоустойчивость control plane.
+
+Проверка: docs/kubernetes-check.txt.
+Все три узла Ready, системные поды Running.

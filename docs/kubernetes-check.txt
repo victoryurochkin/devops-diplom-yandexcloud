@@ -1,0 +1,25 @@
+2026-09-28T10:21:42+03:00
+Client Version: v1.36.4
+Kustomize Version: v5.8.1
+Server Version: v1.36.4
+NAME       STATUS   ROLES           AGE     VERSION   INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION              CONTAINER-RUNTIME
+cp-1       Ready    control-plane   7m28s   v1.36.4   10.200.10.20   <none>        Ubuntu 24.04.5 LTS   6.8.0-139-generic (amd64)   containerd://2.3.5
+worker-1   Ready    <none>          6m35s   v1.36.4   10.200.20.20   <none>        Ubuntu 24.04.5 LTS   6.8.0-139-generic (amd64)   containerd://2.3.5
+worker-2   Ready    <none>          6m35s   v1.36.4   10.200.30.34   <none>        Ubuntu 24.04.5 LTS   6.8.0-139-generic (amd64)   containerd://2.3.5
+NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE     IP               NODE       NOMINATED NODE   READINESS GATES
+kube-system   calico-kube-controllers-84bbd545cc-xnnv2   1/1     Running   0          5m37s   10.233.105.193   worker-1   <none>           <none>
+kube-system   calico-node-c8k4s                          1/1     Running   0          6m7s    10.200.20.20     worker-1   <none>           <none>
+kube-system   calico-node-jkwtk                          1/1     Running   0          6m7s    10.200.30.34     worker-2   <none>           <none>
+kube-system   calico-node-qgm7b                          1/1     Running   0          6m7s    10.200.10.20     cp-1       <none>           <none>
+kube-system   coredns-db7c7cbf8-46p6p                    1/1     Running   0          5m32s   10.233.72.193    worker-2   <none>           <none>
+kube-system   coredns-db7c7cbf8-5smqb                    1/1     Running   0          5m27s   10.233.105.195   worker-1   <none>           <none>
+kube-system   dns-autoscaler-68bc5c675d-vjk75            1/1     Running   0          5m30s   10.233.105.194   worker-1   <none>           <none>
+kube-system   kube-apiserver-cp-1                        1/1     Running   0          7m15s   10.200.10.20     cp-1       <none>           <none>
+kube-system   kube-controller-manager-cp-1               1/1     Running   0          7m15s   10.200.10.20     cp-1       <none>           <none>
+kube-system   kube-proxy-dqsfm                           1/1     Running   0          6m33s   10.200.30.34     worker-2   <none>           <none>
+kube-system   kube-proxy-h87lv                           1/1     Running   0          6m33s   10.200.20.20     worker-1   <none>           <none>
+kube-system   kube-proxy-hl4n5                           1/1     Running   0          6m33s   10.200.10.20     cp-1       <none>           <none>
+kube-system   kube-scheduler-cp-1                        1/1     Running   0          7m15s   10.200.10.20     cp-1       <none>           <none>
+kube-system   nodelocaldns-2jxmf                         1/1     Running   0          5m27s   10.200.20.20     worker-1   <none>           <none>
+kube-system   nodelocaldns-jxnzz                         1/1     Running   0          5m27s   10.200.30.34     worker-2   <none>           <none>
+kube-system   nodelocaldns-kv88p                         1/1     Running   0          5m27s   10.200.10.20     cp-1       <none>           <none>

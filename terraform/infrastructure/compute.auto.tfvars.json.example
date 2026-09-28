@@ -1,0 +1,4 @@
+{
+  "ubuntu_image_id": "fd8ee8il5b8tk8oggcs0",
+  "admin_cidrs": ["YOUR_PUBLIC_IPV4/32"]
+}

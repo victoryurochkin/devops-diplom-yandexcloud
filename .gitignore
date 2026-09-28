@@ -34,3 +34,5 @@ __pycache__/
 .vscode/
 
 # Keep .terraform.lock.hcl tracked
+
+/ansible/inventory/diplom/hosts.yml
