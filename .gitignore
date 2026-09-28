@@ -1,0 +1,36 @@
+# Terraform local files and state
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+
+# Local variables and backend credentials
+*.tfvars
+*.tfvars.json
+*.tfbackend
+!*.tfvars.example
+!*.tfbackend.example
+
+# Credentials
+.secrets/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*sa-key*.json
+kubeconfig
+kubeconfig.*
+**/artifacts/
+
+# Local temporary files
+*.log
+*.retry
+__pycache__/
+.venv/
+.idea/
+.vscode/
+
+# Keep .terraform.lock.hcl tracked

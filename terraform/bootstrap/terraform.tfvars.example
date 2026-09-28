@@ -1,0 +1,3 @@
+cloud_id          = "YOUR_CLOUD_ID"
+folder_id         = "YOUR_FOLDER_ID"
+state_bucket_name = "YOUR_GLOBALLY_UNIQUE_BUCKET_NAME"

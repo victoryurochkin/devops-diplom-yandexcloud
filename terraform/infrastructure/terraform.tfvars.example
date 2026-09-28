@@ -1,0 +1,17 @@
+cloud_id  = "YOUR_CLOUD_ID"
+folder_id = "YOUR_FOLDER_ID"
+
+subnets = {
+  a = {
+    zone = "ru-central1-a"
+    cidr = "10.200.10.0/24"
+  }
+  b = {
+    zone = "ru-central1-b"
+    cidr = "10.200.20.0/24"
+  }
+  d = {
+    zone = "ru-central1-d"
+    cidr = "10.200.30.0/24"
+  }
+}
