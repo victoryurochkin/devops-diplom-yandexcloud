@@ -17,5 +17,32 @@ Apply complete! Resources: 0 added, 0 changed, 13 destroyed.
 Права и секреты находятся только в закрытой копии владельца, не в Git.
 
 Terraform workflow, Application CI, maintenance timer и CD-runner отключены.
-Этот отчёт подтверждает удаление управляемых ресурсов.
-Остатки вне Terraform проверяются отдельно скриптом finish-decommission.py.
+
+Завершающая проверка: 2026-09-29 06:09 UTC (09:09 МСК).
+Команда: python3 scripts/finish-decommission.py --cleanup-github
+Каталог: b1g9bdu0ehutc09likpk
+
+Результаты чтения списков ресурсов:
+compute instance: 0
+compute disk: 0
+compute snapshot: 0
+compute image: 0
+vpc address: 0
+vpc network: 0
+vpc subnet: 0
+vpc security-group: 0
+vpc gateway: 0
+vpc route-table: 0
+container registry: 0
+storage bucket: 0
+iam service-account: 0
+
+GitHub:
+Удалены 6 Secrets инфраструктуры и YC_REGISTRY_PUSHER_KEY приложения.
+Удалены Variables APP_WORKER_IPS и IMAGE_REPOSITORY.
+Удалена регистрация выделенного CD-runner diplom-app-deploy-it.
+В обоих репозиториях оставшихся repository Secrets и Variables нет.
+Terraform infrastructure и Application CI: disabled_manually.
+
+Закрытый отчёт: closure-check-20260929-060921-490218.json.
+Проверка охватывает перечисленные типы ресурсов в указанном каталоге.
