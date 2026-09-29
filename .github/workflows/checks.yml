@@ -27,6 +27,14 @@ jobs:
           python3 -m compileall -q scripts tests
           for script in scripts/*.sh; do bash -n "$script"; done
           "$RUNNER_TEMP/check-tools/bin/python" -m unittest discover -s tests -v
+      - name: Verify storage tool installation
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/storage-tools"
+          "$RUNNER_TEMP/storage-tools/bin/python" -m pip install -r scripts/storage-tools-requirements.txt
+          "$RUNNER_TEMP/storage-tools/bin/python" -m pip check
+          "$RUNNER_TEMP/storage-tools/bin/python" -c 'import boto3, botocore; from botocore.config import Config; Config(request_checksum_calculation="when_required", response_checksum_validation="when_required"); print(boto3.__version__, botocore.__version__)'
+          "$RUNNER_TEMP/storage-tools/bin/python" scripts/retire-bootstrap.py --help
       - name: Terraform format and validation
         run: |
           set -euo pipefail
