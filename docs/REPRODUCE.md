@@ -313,6 +313,11 @@ Timer обновляет краткоживущий kubeconfig CD и запус�
 
 ## 9. Удаление и повторное создание
 
+Для завершения работы после сдачи, включая архивирование и последующее удаление
+bootstrap, использовать [DECOMMISSION.md](DECOMMISSION.md). Скрипт
+`scripts/archive-stand.py` сохраняет данные и готовит проверенный destroy plan.
+Порядок ниже относится к пересозданию основной инфраструктуры с сохранением bootstrap.
+
 Сначала выполнить паузу обслуживания и CI из раздела 8. Сохранить вне репозиториев:
 bootstrap state, .secrets, tfvars, inventory, kubeconfig, git bundle обоих репозиториев,
 основной state через terraform state pull и outputs. Проверить читаемость архивов.

@@ -8,6 +8,7 @@ Kubespray. GitHub Actions собирает и проверяет приложе�
 
 - [Материалы для сдачи](docs/SUBMISSION.md)
 - [Воспроизведение и эксплуатация](docs/REPRODUCE.md)
+- [Завершение работы и восстановление](docs/DECOMMISSION.md)
 - [Репозиторий приложения](https://github.com/victoryurochkin/devops-diplom-app)
 - [Terraform pipeline](https://github.com/victoryurochkin/devops-diplom-yandexcloud/actions/workflows/terraform.yml)
 - [CI/CD приложения](https://github.com/victoryurochkin/devops-diplom-app/actions/workflows/app.yml)
