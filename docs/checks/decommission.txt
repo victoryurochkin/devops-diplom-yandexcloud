@@ -1,0 +1,21 @@
+Дата: 2026-09-29
+Источник: результаты выполнения на управляющем хосте it.
+
+Основная инфраструктура:
+Apply complete! Resources: 0 added, 0 changed, 13 destroyed.
+Пустой основной state проверен перед удалением bootstrap.
+
+Bootstrap:
+Apply complete! Resources: 0 added, 0 changed, 13 destroyed.
+Пустой локальный bootstrap state подтверждён скриптом retire-bootstrap.py.
+Удалены state bucket, 3 сервисных аккаунта, IAM bindings и статический S3-ключ.
+Перед удалением сохранены и проверены 51 версия объекта/маркер удаления бакета.
+
+Резервная копия:
+Проверены SHA256, Git bundles, образ приложения и холодные архивы мониторинга.
+Сохранены исходники, конфигурация, state, SSH, kubeconfig и данные мониторинга.
+Права и секреты находятся только в закрытой копии владельца, не в Git.
+
+Terraform workflow, Application CI, maintenance timer и CD-runner отключены.
+Этот отчёт подтверждает удаление управляемых ресурсов.
+Остатки вне Terraform проверяются отдельно скриптом finish-decommission.py.

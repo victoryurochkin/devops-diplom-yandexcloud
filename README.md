@@ -2,6 +2,11 @@
 
 **Виктор Юрочкин** · [Задание](https://github.com/netology-code/devops-diplom-yandexcloud)
 
+**Статус: стенд отключён 29.09.2026 после принятия диплома.**
+Облачная инфраструктура и bootstrap удалены; образ приложения, данные мониторинга
+и параметры сохранены в проверенной закрытой резервной копии. Terraform и Application CI
+отключены. Исходники, автоматические проверки конфигурации и материалы диплома доступны.
+
 Облачная инфраструктура управляется Terraform, Kubernetes устанавливается
 Kubespray. GitHub Actions собирает и проверяет приложение, публикует образ
 в приватный Registry и развёртывает Git-теги в кластере.
@@ -13,17 +18,13 @@ Kubespray. GitHub Actions собирает и проверяет приложе�
 - [Terraform pipeline](https://github.com/victoryurochkin/devops-diplom-yandexcloud/actions/workflows/terraform.yml)
 - [CI/CD приложения](https://github.com/victoryurochkin/devops-diplom-app/actions/workflows/app.yml)
 
-## Доступ
+## Демонстрация и восстановление
 
-| Сервис | Адрес |
-|---|---|
-| Приложение | http://158.160.31.109/ |
-| Приложение через второй worker | http://158.160.228.171/ |
-| Grafana | http://158.160.31.109/grafana/ |
-| Grafana через второй worker | http://158.160.228.171/grafana/ |
-
-Данные доступа Grafana передаются проверяющему отдельно. Ключей и паролей
-в репозитории нет. Registry приватный; скачивание образов требует авторизации.
+Действующих публичных адресов нет: IP освобождены при удалении стенда.
+Приложение и Grafana показаны на [скриншотах](docs/SUBMISSION.md).
+Для повторного запуска — [порядок восстановления](docs/DECOMMISSION.md#повторное-развёртывание).
+Старые ключи удалённых сервисных аккаунтов недействительны; при создании стенда
+выпускаются новые ключи и синхронизируются новые адреса.
 
 ## Соответствие заданию
 
@@ -41,11 +42,11 @@ Kubespray. GitHub Actions собирает и проверяет приложе�
 
 ## Архитектура
 
-| Узел | Зона | Внутренний IP | Публичный IP | Назначение |
-|---|---|---|---|---|
-| cp-1 | ru-central1-a | 10.200.10.33 | 51.250.67.37 | Control plane и etcd |
-| worker-1 | ru-central1-b | 10.200.20.12 | 158.160.31.109 | Приложение, Traefik, Grafana, Alertmanager |
-| worker-2 | ru-central1-d | 10.200.30.3 | 158.160.228.171 | Приложение, Traefik, Prometheus |
+| Узел | Зона | Назначение |
+|---|---|---|
+| cp-1 | ru-central1-a | Control plane и etcd |
+| worker-1 | ru-central1-b | Приложение, Traefik, Grafana, Alertmanager |
+| worker-2 | ru-central1-d | Приложение, Traefik, Prometheus |
 
 ВМ: standard-v3, 2 vCPU, 4 ГБ RAM, гарантированная доля CPU 20%, SSD 30 ГБ.
 SSH и Kubernetes API доступны только с admin_cidrs. Порт 80 workers открыт
@@ -79,7 +80,7 @@ CI-запуски выполняются последовательно с оч�
 Публичные адреса описаны [отдельными ресурсами Terraform](terraform/infrastructure/addresses.tf)
 и сохраняются при остановке ВМ.
 
-На управляющем хосте it работает diplom-maintenance.timer: проверяет workers
+При развёрнутом стенде на управляющем хосте it используется diplom-maintenance.timer: проверяет workers
 каждые две минуты и запускает остановленные ВМ; обновляет ограниченный токен CD.
 Запрашиваемый срок токена — два часа. Kubeconfig runner заменяется атомарно,
 административный kubeconfig runner не получает. Хост it должен оставаться включённым.
@@ -95,13 +96,14 @@ restore-app.sh принимает digest образа в текущем Registry
 тесты безопасного выбора workers и выпуска токенов, Terraform fmt и validate.
 Рабочий Terraform workflow выполняет plan/apply только для основной конфигурации.
 
-Проверенный релиз приложения: [v1.0.2](https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36449846882).
+Последний проверенный релиз приложения: [v1.0.2](https://github.com/victoryurochkin/devops-diplom-app/actions/runs/36449846882).
 
     cr.yandex/crp77uvg5d2tuusdlk1f/devops-diplom-app:v1.0.2
 
-В Deployment используется digest, зафиксированный в [манифесте](kubernetes/app/deployment.yaml).
-Манифест задаёт версию для первоначального развёртывания; текущий релиз после CD
-проверяется через kubectl. Для восстановления выбирается digest явно.
+Указанный Registry удалён. Образ релиза сохранён в закрытом архиве.
+Ссылка на образ в [манифесте](kubernetes/app/deployment.yaml) относится к проверенному
+развёртыванию. Для нового кластера `restore-app.sh` подставляет текущий Registry
+из Terraform outputs; digest опубликованного образа передаётся явно.
 
 ## Границы учебного стенда
 
